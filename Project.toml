@@ -1,0 +1,13 @@
+name = "Heuristics"
+uuid = "6acb60cf-2fd4-4316-b77c-a68f9bfdd616"
+authors = ["Grant Hecht"]
+version = "0.1.0"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
