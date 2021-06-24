@@ -11,3 +11,22 @@ struct ParticleState{T<:AbstractFloat, N}
     end
 end
 
+mutable struct ParticleFitness{U<:Real}
+    fx::U
+    fp::U 
+
+    function ParticleFitness{U}(fxVal::Real,fpVal::Real) where {U<:Real}
+        return new{U}(U(fxVal), U(fpVal))
+    end
+end
+
+struct Particle{T<:AbstractFloat, U<:Real, N}
+    state::ParticleState{T,N}
+    fit::ParticleFitness{U}
+
+    function Particle{T,U,N}(::UndefInitializer) where {T,U,N}
+        return new{T,U,N}(ParticleState{T,N}(undef),
+                          ParticleFitness{U}(0.0, 0.0))
+    end
+end
+
