@@ -1,6 +1,6 @@
 using Heuristics
-using Test
+using Test, SafeTestsets
 
-@testset "Heuristics.jl" begin
-    # Write your tests here.
+@time begin
+@time @safetestset "Particle tests..." begin include("particleTests.jl") end     
 end
