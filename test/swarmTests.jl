@@ -27,8 +27,8 @@ tempY₂  = rand()
 
 # Setting values
 s.b  = tempB
-s.N  = tempN
-s.W  = tempW
+s.n  = tempN
+s.w  = tempW
 s.c  = tempC
 s.y₁ = tempY₁
 s.y₂ = tempY₂
@@ -43,18 +43,18 @@ s.d .= tempD
     end
 end
 
-# Testing values
+# Testing set values
 @test s.particles isa SizedArray{Tuple{M},Heuristics.Particle{T,U,N},1,1,Vector{Heuristics.Particle{T,U,N}}}
 @test s.b isa U
 @test s.d isa SizedArray{Tuple{N},T,1,1,Vector{T}}
-@test s.N isa V
-@test s.W isa T
+@test s.n isa V
+@test s.w isa T
 @test s.c isa V
 @test s.y₁ isa T 
 @test s.y₂ isa T 
 @test s.b  == U(tempB)
-@test s.N  == V(tempN)
-@test s.W  == T(tempW)
+@test s.n  == V(tempN)
+@test s.w  == T(tempW)
 @test s.c  == V(tempC)
 @test s.y₁ == T(tempY₁)
 @test s.y₂ == T(tempY₂)
@@ -70,3 +70,13 @@ end
         @test s[i].v[j] == T(tempVs[j])
     end
 end
+
+# Testing length(S::Swarm)
+@test length(s) == M
+
+# Testing setindex!
+pNew = Heuristics.Particle{T,U,N}(undef)
+s[1] = pNew 
+@test s[1] == pNew
+
+

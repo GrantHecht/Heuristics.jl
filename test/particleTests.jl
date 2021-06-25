@@ -7,6 +7,7 @@ T = typeof(10.0)
 U = typeof(10.0)
 pp = Heuristics.Particle{T,U,N}(undef)
 
+# Testing types
 @test pp.x isa SizedArray{Tuple{N},T,1,1}
 @test pp.v isa SizedArray{Tuple{N},T,1,1}
 @test pp.p isa SizedArray{Tuple{N},T,1,1}
@@ -36,3 +37,5 @@ pp.fp = 6;
 @test pp.v isa SizedArray{Tuple{N},T,1,1}
 @test pp.p isa SizedArray{Tuple{N},T,1,1}
 
+# Testing length(p::Particle)
+@test length(pp) == N

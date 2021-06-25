@@ -1,6 +1,5 @@
 
 mutable struct Particle{T<:AbstractFloat, U<:Real, N}
-
     x::SizedArray{Tuple{N},T,1,1,Vector{T}}
     v::SizedArray{Tuple{N},T,1,1,Vector{T}}
     p::SizedArray{Tuple{N},T,1,1,Vector{T}}
@@ -16,3 +15,5 @@ mutable struct Particle{T<:AbstractFloat, U<:Real, N}
     end
 end
 
+# Particle methods
+Base.length(p::Particle) = length(p.x)

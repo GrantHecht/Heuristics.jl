@@ -8,8 +8,8 @@ mutable struct Swarm{T<:AbstractFloat,U<:Real,V<:Int,N,M}
     # Location of global best objective function value 
     d::SizedArray{Tuple{N},T,1,1,Vector{T}}
 
-    N::V    # Neighborhood size 
-    W::T    # Inertia
+    n::V    # Neighborhood size 
+    w::T    # Inertia
     c::V    # Adaptive inertia counter
 
     y₁::T   # Self adjustment weight
@@ -24,17 +24,16 @@ mutable struct Swarm{T<:AbstractFloat,U<:Real,V<:Int,N,M}
 end
 
 # Swarm methods
-Base.length(S::Swarm) = length(S.particles)
-Base.lastindex(S::Swarm) = S[length(S)]
+Base.length(s::Swarm) = length(s.particles)
 
-function Base.getindex(S::Swarm, i::Int)
-    1 <= i <= length(S.particles) || throw(BoundsError(S, i))
-    return S.particles[i]
+function Base.getindex(s::Swarm, i::Int)
+    1 <= i <= length(s.particles) || throw(BoundsError(s, i))
+    return s.particles[i]
 end
 
-function Base.setindex!(S::Swarm, v, i::Int)
-    1 <= i <= length(S.particles) || throw(BoundsError(S, i))
-    S.particles[i] = v
+function Base.setindex!(s::Swarm, v, i::Int)
+    1 <= i <= length(s.particles) || throw(BoundsError(s, i))
+    s.particles[i] = v
 end
 
 
