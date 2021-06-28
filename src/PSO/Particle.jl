@@ -1,17 +1,17 @@
 
-mutable struct Particle{T<:AbstractFloat, U<:Real, N}
+mutable struct Particle{T<:AbstractFloat,N}
     x::SizedArray{Tuple{N},T,1,1,Vector{T}}
     v::SizedArray{Tuple{N},T,1,1,Vector{T}}
     p::SizedArray{Tuple{N},T,1,1,Vector{T}}
 
-    fx::U
-    fp::U
+    fx::T
+    fp::T
 
-    function Particle{T,U,N}(::UndefInitializer) where {T,U,N}
-        return new{T,U,N}(SizedVector{N,T}(undef),
-                          SizedVector{N,T}(undef),
-                          SizedVector{N,T}(undef),
-                          U(0.0), U(0.0))
+    function Particle{T,N}(::UndefInitializer) where {T,N}
+        return new{T,N}(SizedVector{N,T}(undef),
+                        SizedVector{N,T}(undef),
+                        SizedVector{N,T}(undef),
+                        T(0.0), T(0.0))
     end
 end
 
