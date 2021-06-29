@@ -8,22 +8,23 @@ struct Problem{fType,S,N}
 end
 
 # If LB and UB are not specified, use default of +/- 1000
-function Problem{S}(objFunc, nDims::Int) where {S}
+function Problem{N}(objFunc) where {N}
+
     # Check that nDims > 0
-    nDims > 0 || throw(ArgumentError("nDims must be greater than zero."))
+    N > 0 || throw(ArgumentError("N must be greater than zero."))
 
     # Get types
     fType = typeof(objFunc)
 
     # Initialize lower and upper bounds
-    LB = SizedArray{Tuple{nDims},S,1,1,Vector{S}}(undef)
-    UB = SizedArray{Tuple{nDims},S,1,1,Vector{S}}(undef)
-    @inbounds for i in 1:nDims
+    LB = SizedArray{Tuple{N},Int,1,1,Vector{Int}}(undef)
+    UB = SizedArray{Tuple{N},Int,1,1,Vector{Int}}(undef)
+    @inbounds for i in 1:N
         LB[i] = -1000
         UB[i] = 1000
     end
 
-    return Problem{fType,S,nDims}(objFunc, LB, UB)
+    return Problem{fType,Int,N}(objFunc, LB, UB)
 end
 
 function Problem{S,N}(objFunc, LB, UB) where {S,N}
