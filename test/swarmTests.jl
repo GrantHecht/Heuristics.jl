@@ -4,12 +4,10 @@ using Heuristics, StaticArrays
 N = 5
 M = 5
 T = typeof(10.0)
-U = typeof(10.0)
-V = typeof(0)
-s = Heuristics.Swarm{T,U,V,N,M}(undef)
+s = Heuristics.Swarm{T,N,M}(undef)
 
 # Initialization
-@test s.particles isa SizedArray{Tuple{M},Heuristics.Particle{T,U,N},1,1,Vector{Heuristics.Particle{T,U,N}}}
+@test s.particles isa SizedArray{Tuple{M},Heuristics.Particle{T,N},1,1,Vector{Heuristics.Particle{T,N}}}
 
 # Initializing temp variables 
 tempXs  = rand(N,M)
@@ -44,26 +42,26 @@ s.d .= tempD
 end
 
 # Testing set values
-@test s.particles isa SizedArray{Tuple{M},Heuristics.Particle{T,U,N},1,1,Vector{Heuristics.Particle{T,U,N}}}
-@test s.b isa U
+@test s.particles isa SizedArray{Tuple{M},Heuristics.Particle{T,N},1,1,Vector{Heuristics.Particle{T,N}}}
+@test s.b isa T
 @test s.d isa SizedArray{Tuple{N},T,1,1,Vector{T}}
-@test s.n isa V
+@test s.n isa UInt16
 @test s.w isa T
-@test s.c isa V
+@test s.c isa UInt16
 @test s.y₁ isa T 
 @test s.y₂ isa T 
-@test s.b  == U(tempB)
-@test s.n  == V(tempN)
+@test s.b  == T(tempB)
+@test s.n  == UInt16(tempN)
 @test s.w  == T(tempW)
-@test s.c  == V(tempC)
+@test s.c  == UInt16(tempC)
 @test s.y₁ == T(tempY₁)
 @test s.y₂ == T(tempY₂)
 @inbounds for i in 1:N
     @test s.d[i] == T(tempD[i])
 end
 @inbounds for i in 1:M
-    @test s[i].fx == U(tempFxs[i])
-    @test s[i].fp == U(tempFps[i])
+    @test s[i].fx == T(tempFxs[i])
+    @test s[i].fp == T(tempFps[i])
     for j in 1:N
         @test s[i].x[j] == T(tempXs[j])
         @test s[i].p[j] == T(tempPs[j])
@@ -75,7 +73,7 @@ end
 @test length(s) == M
 
 # Testing setindex!
-pNew = Heuristics.Particle{T,U,N}(undef)
+pNew = Heuristics.Particle{T,N}(undef)
 s[1] = pNew 
 @test s[1] == pNew
 
