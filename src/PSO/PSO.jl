@@ -31,7 +31,7 @@ struct PSO{T,S,N,M,fType} <: Optimizer
         results = Results{T,N}(undef)
 
         # Check that init and update methods exist
-        if initMethod != :Uniform 
+        if initMethod != :Uniform && initMethod != :LogisticsMap
             throw(ArgumentError("$initMethod is not a PSO initialization method."))
         end
         if updateMethod != :MATLAB 
@@ -86,10 +86,10 @@ function initialize!(pso::PSO, opts::Options)
     # Initialize position and velocities
     if pso.initMethod == :Uniform
         uniformInitialization!(pso.swarm, pso.prob, opts)
-
+    elseif pso.initMethod == :LogisticsMap
+        logisticsMapInitialization!(pso.swarm, pso.prob, opts)
     else
         throw(ArgumentError("PSO initialization method is not implemented."))
-
     end
 
     # Evaluate Objective Function
