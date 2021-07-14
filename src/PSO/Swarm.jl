@@ -44,7 +44,7 @@ function feval!(s::Swarm, f, opts::Options; init = false)
     # Evaluate objective functions
     @inbounds begin
         if opts.useParallel
-            Threads.@threads for i in 1:length(s)
+            @qthreads for i in 1:length(s)
                 s[i].fx = f(s[i].x)
             end
         else
