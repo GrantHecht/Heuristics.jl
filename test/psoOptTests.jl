@@ -27,7 +27,7 @@ begin
     N = 2
     M = 1000
     prob2 = Problem{N}(sphereFunc)
-    pso2 = PSO{M}(prob2)
+    pso2 = PSO{M}(prob2; initMethod = :LogisticsMap)
 
     @suppress_out begin
         optimize!(pso2)
