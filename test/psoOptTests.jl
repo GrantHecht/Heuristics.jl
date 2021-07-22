@@ -27,10 +27,11 @@ begin
     N = 2
     M = 1000
     prob2 = Problem{N}(sphereFunc)
+    opts = Options(;display = true, useParallel = true)
     pso2 = PSO{M}(prob2; initMethod = :LogisticsMap)
 
     @suppress_out begin
-        optimize!(pso2)
+        optimize!(pso2, opts)
     end
 
     @test pso2.results.fbest <= 1.0e-5
