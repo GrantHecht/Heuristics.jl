@@ -2,6 +2,7 @@ module Heuristics
 
 using StaticArrays
 using Format 
+import ThreadPools: @qthreads
 import Random: shuffle!
 
 # Required
