@@ -214,7 +214,7 @@ function logisticsMapInitialization!(swarm::Swarm, prob::Problem, opts::Options)
 
     # Check if initial bounds on positions have been set
     useInitBnds = false
-    if length(opts.iLB) == N && length(opts.iUB == N)
+    if length(opts.iLB) == N && length(opts.iUB) == N
         useInitBnds = true
         iLB = opts.iLB            
         iUB = opts.iUB
