@@ -8,14 +8,20 @@ function schaffer(x)
     return obj 
 end
 
+function waveDrop(x)
+    obj = -(1 + cos(12*sqrt(x[1]^2 + x[2]^2)))/(0.5*(x[1]^2 + x[2]^2) + 2.0)
+    return obj
+end
+
 # Setup Problem
 d = 2
-LB = -100*ones(d)
-UB = 100*ones(d)
+LB = -5.12*ones(d)
+UB = 5.12*ones(d)
 
-prob = Problem(schaffer, LB, UB)
-pso  = PSO(prob; numParticles = 10)
+prob = Problem(waveDrop, LB, UB)
+pso  = PSO(prob; numParticles = 100)
 
 # optimize
-opts = Options(;display = false)
+opts = Options(;display = false, maxStallIters = 100)
 @benchmark optimize!($pso, $opts)
+#optimize!(pso, opts)
