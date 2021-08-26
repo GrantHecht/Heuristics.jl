@@ -1,11 +1,11 @@
 
-struct PSO{T,S,N,M,fType} <: Optimizer
+struct PSO{T,S,fType} <: Optimizer
 
     # Optimization problem
-    prob::Problem{fType,S,N}
+    prob::Problem{fType,S}
 
     # Swarm of particles
-    swarm::Swarm{T,N,M}
+    swarm::Swarm{T}
 
     # Settings 
     initMethod::Symbol      # Only option now is :Uniform
@@ -18,17 +18,18 @@ struct PSO{T,S,N,M,fType} <: Optimizer
     socialAdjustWeight::T 
 
     # Results data
-    results::Results{T,N}
+    results::Results{T}
 
-    function PSO{T,N,M}(prob::Problem{fType,S,N}, initMethod::Symbol, 
+    function PSO{T}(prob::Problem{fType,S}, numParticles::Integer, initMethod::Symbol, 
         updateMethod::Symbol, inertiaRange::Tuple{T,T}, minNeighborFrac::T, 
-        selfAdjustWeight::T, socialAdjustWeight::T) where {T,S,N,M,fType}
+        selfAdjustWeight::T, socialAdjustWeight::T) where {T,S,fType}
 
         # Initialize Swarm 
-        swarm = Swarm{T,N,M}(undef)
+        N = length(prob.LB)
+        swarm = Swarm{T}(N, numParticles)
 
         # Initialize results
-        results = Results{T,N}(undef)
+        results = Results{T}(undef, N)
 
         # Check that init and update methods exist
         if initMethod != :Uniform && initMethod != :LogisticsMap
@@ -38,7 +39,7 @@ struct PSO{T,S,N,M,fType} <: Optimizer
             throw(ArgumentError("$updateMethod is not a PSO update method."))
         end
 
-        return new{T,S,N,M,fType}(prob, swarm, initMethod, updateMethod, 
+        return new{T,S,fType}(prob, swarm, initMethod, updateMethod, 
                         inertiaRange, minNeighborFrac, selfAdjustWeight, 
                         socialAdjustWeight, results)
     end
@@ -46,9 +47,9 @@ end
 
 # ===== Constructors
 
-function PSO{M}(prob::Problem{fType,S,N}; inertiaRange = (0.1, 1.1), minNeighborFrac = 0.25, 
+function PSO(prob::Problem{fType,S}; numParticles = 100, inertiaRange = (0.1, 1.1), minNeighborFrac = 0.25, 
     selfAdjustWeight = 1.49, socialAdjustWeight = 1.49, initMethod::Symbol = :Uniform,
-    updateMethod::Symbol = :MATLAB) where {S,N,M,fType}
+    updateMethod::Symbol = :MATLAB) where {S,fType}
 
     # Error checking
     length(inertiaRange) == 2 || throw(ArgumentError("inertiaRange must be of length 2."))
@@ -59,7 +60,7 @@ function PSO{M}(prob::Problem{fType,S,N}; inertiaRange = (0.1, 1.1), minNeighbor
     nIRange = (T(inertiaRange[1]), T(inertiaRange[2]))
 
     # Call constructor
-    return PSO{T,N,M}(prob, initMethod, updateMethod, nIRange, T(minNeighborFrac),
+    return PSO{T}(prob, numParticles, initMethod, updateMethod, nIRange, T(minNeighborFrac),
         T(selfAdjustWeight), T(socialAdjustWeight))
 end
 

@@ -1,30 +1,44 @@
-mutable struct Swarm{T<:AbstractFloat,N,M}
+mutable struct Swarm{T<:AbstractFloat}
 
     # Vector of particles
-    particles::SizedArray{Tuple{M},Particle{T,N},1,1,Vector{Particle{T,N}}}
+    particles::Vector{Particle{T}}
 
     # Preallocated vector of UInt16 for neighborhood selection
-    nVec::SizedArray{Tuple{M}, UInt16, 1, 1, Vector{UInt16}}
+    nVec::Vector{UInt16}
 
     # Global best objective function value
     b::T
 
     # Location of global best objective function value 
-    d::SizedArray{Tuple{N},T,1,1,Vector{T}}
+    d::Vector{T}
 
     n::UInt16   # Neighborhood size 
     w::T        # Inertia
-    c::UInt16   # Adaptive inertia counter
+    c::UInt64   # Adaptive inertia counter
 
     y₁::T   # Self adjustment weight
     y₂::T   # Social adjustment weight
 
-    function Swarm{T,N,M}(::UndefInitializer) where {T,N,M}
-        return new{T,N,M}(SizedVector{M}([Particle{T,N}(undef) for i in 1:M]),
-            SizedVector{M,UInt16}(1:M), T(0.0), SizedVector{N,T}(undef), 
-            UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
-    end
 end
+
+function Swarm{T}(::UndefInitializer) where {T}
+        return Swarm{T}(Vector{Particle{T}}(undef, 0),
+            Vector{UInt16}(undef, 0), T(0.0), Vector{T}(undef, 0), 
+            UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
+end
+
+function Swarm{T}(nDims::Integer, nParticles::Integer) where {T}
+    if nDims < 0
+        throw(ArgumentError("nDims must be greater than 0.")) 
+    end
+    if nParticles < 0
+        throw(ArgumentError("nParticles must be greater than 0."))
+    end
+    return Swarm{T}(Vector{Particle{T}}([Particle{T}(nDims) for i in 1:nParticles]),
+        Vector{UInt16}(1:nParticles), T(0.0), Vector{T}(undef, nDims), 
+        UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
+end
+
 
 # ===== Methods
 
