@@ -4,7 +4,7 @@ mutable struct Swarm{T<:AbstractFloat}
     particles::Vector{Particle{T}}
 
     # Preallocated vector of UInt16 for neighborhood selection
-    nVec::Vector{UInt16}
+    nVec::Vector{Int}
 
     # Global best objective function value
     b::T
@@ -12,9 +12,9 @@ mutable struct Swarm{T<:AbstractFloat}
     # Location of global best objective function value 
     d::Vector{T}
 
-    n::UInt16   # Neighborhood size 
+    n::Int      # Neighborhood size 
     w::T        # Inertia
-    c::UInt64   # Adaptive inertia counter
+    c::Int      # Adaptive inertia counter
 
     y₁::T   # Self adjustment weight
     y₂::T   # Social adjustment weight
@@ -23,8 +23,8 @@ end
 
 function Swarm{T}(::UndefInitializer) where {T}
         return Swarm{T}(Vector{Particle{T}}(undef, 0),
-            Vector{UInt16}(undef, 0), T(0.0), Vector{T}(undef, 0), 
-            UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
+            Vector{Int}(undef, 0), T(0.0), Vector{T}(undef, 0), 
+            Int(0), T(0.0), Int(0), T(0.0), T(0.0))
 end
 
 function Swarm{T}(nDims::Integer, nParticles::Integer) where {T}
