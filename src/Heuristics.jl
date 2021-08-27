@@ -2,6 +2,7 @@ module Heuristics
 
 using StaticArrays
 using Format 
+using ThreadPools
 import Random: shuffle!
 
 # Required
@@ -11,6 +12,7 @@ include("Optimizers.jl")
 include("Results.jl")
 
 # PSO includes
+include("./PSO/psoUtil.jl")
 include("./PSO/Particle.jl")
 include("./PSO/Swarm.jl")
 include("./PSO/PSO.jl")

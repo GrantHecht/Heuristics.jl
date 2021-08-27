@@ -1,25 +1,28 @@
 
-using Heuristics, StaticArrays
+using Heuristics, StaticArrays, BenchmarkTools
 
 # Objective function
-f(x) = sum(x.^2)
+include("./../test/testProblems.jl")
 
 function main()
 
     # Size of problem
-    N = 5
-    M = 50
+    N = 2
+    M = 200
 
     # Define problem: N is number of dims 
-    LB = -5 .* ones(N)
-    UB =  5 .* ones(N)
-    prob = Problem{N}(f, LB, UB)
+    LB = -100 .* ones(N)
+    UB =  100 .* ones(N)
+    prob = Problem{N}(rastriginfunc, LB, UB)
+    opts = Options(display=true)
 
     # Initialize Optimizer: M is swarm size!
-    optimizer = PSO{M}(prob;)
+    optimizer = PSO{M}(prob; initMethod = :LogisticsMap)
 
     # solve 
-    optimize!(optimizer)
+    #Heuristics.initialize!(optimizer, opts)
+    #@btime Heuristics.iterate!($optimizer, $opts)
+    optimize!(optimizer, opts)
 
     return nothing
 end

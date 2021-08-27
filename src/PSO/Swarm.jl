@@ -1,30 +1,44 @@
-mutable struct Swarm{T<:AbstractFloat,N,M}
+mutable struct Swarm{T<:AbstractFloat}
 
     # Vector of particles
-    particles::SizedArray{Tuple{M},Particle{T,N},1,1,Vector{Particle{T,N}}}
+    particles::Vector{Particle{T}}
 
     # Preallocated vector of UInt16 for neighborhood selection
-    nVec::SizedArray{Tuple{M}, UInt16, 1, 1, Vector{UInt16}}
+    nVec::Vector{Int}
 
     # Global best objective function value
     b::T
 
     # Location of global best objective function value 
-    d::SizedArray{Tuple{N},T,1,1,Vector{T}}
+    d::Vector{T}
 
-    n::UInt16   # Neighborhood size 
+    n::Int      # Neighborhood size 
     w::T        # Inertia
-    c::UInt16   # Adaptive inertia counter
+    c::Int      # Adaptive inertia counter
 
     y₁::T   # Self adjustment weight
     y₂::T   # Social adjustment weight
 
-    function Swarm{T,N,M}(::UndefInitializer) where {T,N,M}
-        return new{T,N,M}(SizedVector{M}([Particle{T,N}(undef) for i in 1:M]),
-            SizedVector{M,UInt16}(1:M), T(0.0), SizedVector{N,T}(undef), 
-            UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
-    end
 end
+
+function Swarm{T}(::UndefInitializer) where {T}
+        return Swarm{T}(Vector{Particle{T}}(undef, 0),
+            Vector{Int}(undef, 0), T(0.0), Vector{T}(undef, 0), 
+            Int(0), T(0.0), Int(0), T(0.0), T(0.0))
+end
+
+function Swarm{T}(nDims::Integer, nParticles::Integer) where {T}
+    if nDims < 0
+        throw(ArgumentError("nDims must be greater than 0.")) 
+    end
+    if nParticles < 0
+        throw(ArgumentError("nParticles must be greater than 0."))
+    end
+    return Swarm{T}(Vector{Particle{T}}([Particle{T}(nDims) for i in 1:nParticles]),
+        Vector{UInt16}(1:nParticles), T(0.0), Vector{T}(undef, nDims), 
+        UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
+end
+
 
 # ===== Methods
 
@@ -44,7 +58,7 @@ function feval!(s::Swarm, f, opts::Options; init = false)
     # Evaluate objective functions
     @inbounds begin
         if opts.useParallel
-            Threads.@threads for i in 1:length(s)
+            @qthreads for i in 1:length(s)
                 s[i].fx = f(s[i].x)
             end
         else
@@ -174,7 +188,7 @@ function uniformInitialization!(swarm::Swarm, prob::Problem, opts::Options)
 
     # Check if initial bounds on positions have been set
     useInitBnds = false
-    if length(opts.iLB) == N && length(opts.iUB == N)
+    if length(opts.iLB) == N && length(opts.iUB) == N
         useInitBnds = true
         iLB = opts.iLB            
         iUB = opts.iUB
@@ -189,6 +203,77 @@ function uniformInitialization!(swarm::Swarm, prob::Problem, opts::Options)
             @simd for p in 1:M
                 # Position information
                 swarm[p].x[d] = lLB + (lUB - lLB)*rand()
+                swarm[p].p[d] = swarm[p].x[d]
+
+                # Velocity 
+                r = useInitBnds ? min(lUB-lLB,UB[d]-LB[d]) : lUB - lLB 
+                swarm[p].v[d] = -r + 2*r*rand()
+            end
+        end
+    end
+    
+    return nothing
+end
+
+# Initializes position and velocities of particles using logistic map
+function logisticsMapInitialization!(swarm::Swarm, prob::Problem, opts::Options)
+
+    # Get N: Number of diamensions and M: Swarm Size 
+    M = length(swarm)
+    N = length(swarm[1])
+
+    # Get Boundary Constraints
+    LB  = prob.LB
+    UB  = prob.UB
+
+    # Check if initial bounds on positions have been set
+    useInitBnds = false
+    if length(opts.iLB) == N && length(opts.iUB) == N
+        useInitBnds = true
+        iLB = opts.iLB            
+        iUB = opts.iUB
+    end
+
+    # Logistics map initialization
+    fixedPointTol = 1e-14
+    maxPert = 1e-12
+    lMapIters = 3000
+    @inbounds begin
+        @simd for j in 1:M
+            @simd for k in 1:N
+                swarm[j].x[k] = 0.4567 + 2*(rand() - 0.5)*maxPert
+            end
+        end
+        @simd for i in 1:lMapIters
+            @simd for j in 1:M 
+                @simd for k in 1:N
+                    val = swarm[j].x[k]
+                    if val < fixedPointTol || 
+                       abs(val - 0.25) < fixedPointTol || 
+                       abs(val - 0.50) < fixedPointTol ||
+                       abs(val - 0.75) < fixedPointTol ||
+                       abs(val - 1.00) < fixedPointTol
+
+                       swarm[j].x[k] += maxPert*rand()
+                    end
+                    swarm[j].x[k] = lMap(swarm[j].x[k])
+                    if isinf(swarm[j].x[k]) 
+                        throw(ErrorException("Inf or NaN"))
+                    end
+                end
+            end
+        end
+    end
+
+    # Scale particle positions and initialize velocities
+    @inbounds begin
+        @simd for d in 1:N
+            # Get local bounds for d-axis
+            lLB = useInitBnds ? (LB[d] < iLB[d] ? iLB[d] : LB[d]) : LB[d]
+            lUB = useInitBnds ? (UB[d] > iUB[d] ? iUB[d] : UB[d]) : UB[d]
+            @simd for p in 1:M
+                # Position information
+                swarm[p].x[d] = lLB + (lUB - lLB)*swarm[p].x[d]
                 swarm[p].p[d] = swarm[p].x[d]
 
                 # Velocity 
