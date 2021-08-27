@@ -2,6 +2,7 @@ module Heuristics
 
 using StaticArrays
 using Format 
+using ThreadPools
 import Random: shuffle!
 
 # Required

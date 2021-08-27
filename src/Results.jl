@@ -1,14 +1,14 @@
 
 mutable struct Results{T,N}
     fbest::T 
-    xbest::SizedArray{Tuple{N},T,1,1,Vector{T}}
+    xbest::Vector{T}
 
     iters::UInt32 
     time::T 
     exitFlag::UInt8
 
-    function Results{T,N}(::UndefInitializer) where {T,N}
-        new{T,N}(T(NaN),SizedVector{N,T}(undef),UInt32(0),
+    function Results{T}(::UndefInitializer, N::Integer) where {T}
+        new{T,N}(T(NaN),Vector{T}(undef, N),UInt32(0),
                  T(0.0),UInt8(255))
     end
 end
