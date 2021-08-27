@@ -1,36 +1,39 @@
-struct Problem{fType,S,N}
+struct Problem{fType,S}
 
     f::fType  # Objective function
     
-    LB::SizedArray{Tuple{N},S,1,1,Vector{S}}
-    UB::SizedArray{Tuple{N},S,1,1,Vector{S}}
+    LB::Vector{S}
+    UB::Vector{S}
 
 end
 
 # If LB and UB are not specified, use default of +/- 1000
-function Problem{N}(objFunc) where {N}
+function Problem(objFunc, numVars)
 
     # Check that nDims > 0
-    N > 0 || throw(ArgumentError("N must be greater than zero."))
+    numVars > 0 || throw(ArgumentError("N must be greater than zero."))
 
     # Get types
     fType = typeof(objFunc)
 
     # Initialize lower and upper bounds
-    LB = SizedArray{Tuple{N},Int,1,1,Vector{Int}}(undef)
-    UB = SizedArray{Tuple{N},Int,1,1,Vector{Int}}(undef)
-    @inbounds for i in 1:N
+    LB = Vector{Int}(undef, numVars)
+    UB = Vector{Int}(undef, numVars)
+    @inbounds for i in 1:numVars
         LB[i] = -1000
         UB[i] = 1000
     end
 
-    return Problem{fType,Int,N}(objFunc, LB, UB)
+    return Problem{fType,Int}(objFunc, LB, UB)
 end
 
-function Problem{S,N}(objFunc, LB, UB) where {S,N}
+function Problem{S}(objFunc, LB, UB) where {S}
 
-    # Check that N > 0
-    N > 0 || throw(ArgumentError("N must be greater than zero."))
+    # Check that LB and UB are the same length
+    N = length(LB)
+    if length(UB) != N
+        throw(ArgumentError("Lower bounds and upper bound vectors must be the same length."))
+    end
 
     # Check that LB[i] < UB[i] ∀ i
     @inbounds for i in 1:N
@@ -41,12 +44,12 @@ function Problem{S,N}(objFunc, LB, UB) where {S,N}
     fType = typeof(objFunc)
 
     # Initialize lower and upper bounds
-    sLB = SizedArray{Tuple{N},S,1,1,Vector{S}}(LB)
-    sUB = SizedArray{Tuple{N},S,1,1,Vector{S}}(UB)
+    sLB = Vector{S}(LB)
+    sUB = Vector{S}(UB)
 
-    return Problem{fType,S,N}(objFunc, sLB, sUB)
+    return Problem{fType,S}(objFunc, sLB, sUB)
 end
 
-function Problem{N}(objFunc, LB::AbstractArray{S}, UB::AbstractArray{S}) where {S,N}
+function Problem(objFunc, LB::AbstractArray{S}, UB::AbstractArray{S}) where {S}
     return Problem{S,N}(objFunc, LB, UB)
 end

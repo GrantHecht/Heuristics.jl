@@ -8,9 +8,9 @@ begin
     M = 200
     LB = -5 .* ones(N)
     UB = 5 .* ones(N)
-    prob1 = Problem{N}(sphereFunc, LB, UB)
+    prob1 = Problem(sphereFunc, LB, UB)
     opts = Options(;display = false, useParallel=true)
-    pso1 = PSO{M}(prob1)
+    pso1 = PSO(prob1; numParticles = M)
 
     res = optimize!(pso1, opts)
 
@@ -26,9 +26,9 @@ end
 begin
     N = 2
     M = 1000
-    prob2 = Problem{N}(sphereFunc)
+    prob2 = Problem(sphereFunc, N)
     opts = Options(;display = true, useParallel = true)
-    pso2 = PSO{M}(prob2; initMethod = :LogisticsMap)
+    pso2 = PSO(prob2; numParticles = M, initMethod = :LogisticsMap)
 
     @suppress_out begin
         optimize!(pso2, opts)
