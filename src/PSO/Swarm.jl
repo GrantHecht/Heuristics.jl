@@ -35,8 +35,8 @@ function Swarm{T}(nDims::Integer, nParticles::Integer) where {T}
         throw(ArgumentError("nParticles must be greater than 0."))
     end
     return Swarm{T}(Vector{Particle{T}}([Particle{T}(nDims) for i in 1:nParticles]),
-        Vector{UInt16}(1:nParticles), T(0.0), Vector{T}(undef, nDims), 
-        UInt16(0), T(0.0), UInt16(0), T(0.0), T(0.0))
+        Vector{Int}(1:nParticles), T(0.0), Vector{T}(undef, nDims), 
+        Int(0), T(0.0), Int(0), T(0.0), T(0.0))
 end
 
 
