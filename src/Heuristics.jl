@@ -16,6 +16,7 @@ include("./PSO/psoUtil.jl")
 include("./PSO/Particle.jl")
 include("./PSO/Swarm.jl")
 include("./PSO/PSO.jl")
+include("./PSO/MS_PSO.jl")
 
 # Exports
 export Problem
@@ -23,5 +24,6 @@ export Options
 export optimize!
 
 export PSO
+export MS_PSO
 
 end
