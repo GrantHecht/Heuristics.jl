@@ -48,7 +48,7 @@ end
 
 # ===== Constructors
 
-function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 4, 
+function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 8, 
     inertiaRange = (0.1, 1.1), minNeighborFrac = 0.25, selfAdjustWeight = 1.49, 
     socialAdjustWeight = 1.49, initMethod::Symbol = :Uniform, 
     updateMethod::Symbol = :MATLAB) where {S,fType}
@@ -219,7 +219,10 @@ function iterate!(mspso::MS_PSO, opts::Options)
             # Check for stalling 
             if stallIters[i] >= opts.maxStallIters
                 hasStalled[i] = true
+                interMingle!(mspso.swarmVec, i)
             end
+
+            
        end
 
         # Stopping criteria
@@ -243,6 +246,30 @@ function iterate!(mspso::MS_PSO, opts::Options)
 
     # Set results
     setResults!(mspso, iters, time() - t0, exitFlag)
+
+    return nothing
+end
+
+# Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
+function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
+    # Choosing swarm to intermingle with stalled swarm
+    swarmChosen = false
+    swarmIdx = stallIdx
+    while !swarmChosen
+        swarmIdx = rand(1:length(swarmVec))
+        if swarmIdx != stallIdx 
+            swarmChosen = true
+        end
+    end
+
+    # Intermingle small subset of chosen swarm (10%)
+    n = length(swarmVec[1])
+    nSubSet = floor(0.1*n)
+    for i in 1:nSubSet
+        idx = rand(1:n) 
+        swarmVec[stallIdx][idx].p .= swarmVec[swarmIdx][idx].p
+        swarmVec[stallIdx][idx].fp = swarmVec[swarmIdx][idx].fp
+    end
 
     return nothing
 end
