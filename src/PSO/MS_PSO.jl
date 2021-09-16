@@ -264,11 +264,12 @@ function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
 
     # Intermingle small subset of chosen swarm (10%)
     n = length(swarmVec[1])
-    nSubSet = floor(0.1*n)
+    nSubSet = floor(0.2*n)
     for i in 1:nSubSet
-        idx = rand(1:n) 
-        swarmVec[stallIdx][idx].p .= swarmVec[swarmIdx][idx].p
-        swarmVec[stallIdx][idx].fp = swarmVec[swarmIdx][idx].fp
+        idx1 = rand(1:n) 
+        idx2 = rand(1:n)
+        swarmVec[stallIdx][idx1].p .= swarmVec[swarmIdx][idx2].p
+        swarmVec[stallIdx][idx1].fp = swarmVec[swarmIdx][idx2].fp
     end
 
     return nothing
