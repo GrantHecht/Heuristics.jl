@@ -8,7 +8,7 @@ struct PSO{T,S,fType} <: Optimizer
     swarm::Swarm{T}
 
     # Settings 
-    initMethod::Symbol      # Only option now is :Uniform
+    initMethod::Symbol      # :Uniform or :LogisticsMap
     updateMethod::Symbol    # Only option now is :MATLAB
 
     # PSO specific parameters/options

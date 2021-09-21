@@ -166,11 +166,47 @@ function enforceBounds!(s::Swarm, LB, UB)
     end
 end
 
+function computeAverangeFitness(s::Swarm)
+    @inbounds begin
+        sum = 0.0
+        @simd for i in 1:length(s)
+            sum += s[i].fx 
+        end
+    end
+    return sum / length(s)
+end
+
+function computeMFD(s::Swarm)
+    @inbounds begin
+        MFD = -Inf
+        @simd for i in 1:length(s)
+            sum = 0.0
+            @simd for j in 1:length(s.d)
+                #sum += (s[i].p[j] - s[i].x[j])^2
+                sum += (s.d[j] - s[i].x[j])^2
+            end
+            sqrtTerm = sqrt(sum / length(s.d))
+            if sqrtTerm > MFD 
+                MFD = sqrtTerm
+            end
+        end
+    end
+    return MFD
+end
+
 function printStatus(s::Swarm, time::AbstractFloat, iter::Int, stallCount::Int)
     fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}, Function Evaluations: {3:d}")
     fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")
     printfmtln(fspec1, time, iter, (iter + 1)*length(s))
     printfmtln(fspec2, stallCount, s.b)
+    println(" ")
+end
+
+function printStatus(s::Swarm, time::AbstractFloat, iter::Int, MFD::AbstractFloat, fAvg::AbstractFloat)
+    fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}, Function Evaluations: {3:d}")
+    fspec2 = FormatExpr("MFD: {1:e}, Avg. Fitness: {2:e}, Global Best: {3:e}")
+    printfmtln(fspec1, time, iter, (iter + 1)*length(s))
+    printfmtln(fspec2, MFD, fAvg, s.b)
     println(" ")
 end
 
