@@ -13,6 +13,7 @@ mutable struct MPSO{T,S,fType} <: Optimizer
 
     # MPSO specific parameters 
     MFDstar::T
+    MFDType::Symbol # Options are :Global, :Local, Average
     α::T
     c1::T 
     c2::T
@@ -31,7 +32,8 @@ mutable struct MPSO{T,S,fType} <: Optimizer
     # Results data
     results::Results{T}
 
-    function MPSO{T}(prob::Problem{fType,S}, numParticles::Integer, MFD, α, c1, c2, sc, fc, g, ψ, pm) where {T,S,fType}
+    function MPSO{T}(prob::Problem{fType,S}, numParticles::Integer, MFD, MFDType, 
+        α, c1, c2, sc, fc, g, ψ, pm) where {T,S,fType}
 
         # Initialize Swarm 
         N = length(prob.LB)
@@ -56,20 +58,20 @@ mutable struct MPSO{T,S,fType} <: Optimizer
         # Initialize results
         results = Results{T}(undef, N)
 
-        return new{T,S,fType}(prob, swarm, T(0.25), T(MFD), T(α), T(c1), T(c2), sc, fc, T(g), T(ψ), T(pm), T(NaN), T(NaN), T(NaN), T(1.0), results)
+        return new{T,S,fType}(prob, swarm, T(0.25), T(MFD), MFDType, T(α), T(c1), T(c2), sc, fc, T(g), T(ψ), T(pm), T(NaN), T(NaN), T(NaN), T(1.0), results)
     end
 end
 
 # ===== Constructors
 
-function MPSO(prob::Problem{fType,S}; numParticles = 100, MFD = 2.8e-6, α = 0.2, 
+function MPSO(prob::Problem{fType,S}; numParticles = 100, MFD = 2.8e-6, MFDType = :Local, α = 0.2, 
     c1 = 1.49, c2 = 1.49, sc = 15, fc = 5, g = 10000.0, ψ = 1.0, pm = -1.0) where {S,fType}
 
     # Type info
     T = typeof(1.0)
 
     # Call constructor
-    return MPSO{T}(prob, numParticles, MFD, α, c1, c2, sc, fc, g, ψ, pm)
+    return MPSO{T}(prob, numParticles, MFD, MFDType, α, c1, c2, sc, fc, g, ψ, pm)
 end
 
 # ===== Methods 
@@ -142,7 +144,7 @@ function iterate!(mpso::MPSO, opts::Options)
     while exitFlag == 0
         # Compute average fitness and MFD
         mpso.fAvg = computeAverangeFitness(mpso.swarm); 
-        mpso.MFD  = computeMFD(mpso.swarm)
+        mpso.MFD  = computeLMFD(mpso.swarm)
 
         # Update position of particles based on MFD
         bestIdx = updateGlobalBestParticlePosition!(mpso)

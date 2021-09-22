@@ -208,6 +208,7 @@ function computeLMFD(s::Swarm)
             end
         end
     end
+    return MFD
 end
 
 function computeAFD(s::Swarm)
