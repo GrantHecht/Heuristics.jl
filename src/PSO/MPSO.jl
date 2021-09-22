@@ -113,7 +113,7 @@ function initialize!(mpso::MPSO, opts::Options)
     mpso.swarm.w = 0.9
 
     # Print Status
-    if display
+    if opts.display
         #printStatus(mpso.swarm, 0.0, 0.0)
     end
 
