@@ -31,7 +31,7 @@ mutable struct MPSO{T,S,fType} <: Optimizer
     # Results data
     results::Results{T}
 
-    function MPSO{T}(prob::Problem{fType,S}, numParticles::Integer, α, c1, c2, sc, fc, g, ψ, pm) where {T,S,fType}
+    function MPSO{T}(prob::Problem{fType,S}, numParticles::Integer, MFD, α, c1, c2, sc, fc, g, ψ, pm) where {T,S,fType}
 
         # Initialize Swarm 
         N = length(prob.LB)
@@ -56,20 +56,20 @@ mutable struct MPSO{T,S,fType} <: Optimizer
         # Initialize results
         results = Results{T}(undef, N)
 
-        return new{T,S,fType}(prob, swarm, T(0.25), T(2.8e-6), T(α), T(c1), T(c2), sc, fc, T(g), T(ψ), T(pm), T(NaN), T(NaN), T(NaN), T(1.0), results)
+        return new{T,S,fType}(prob, swarm, T(0.25), T(MFD), T(α), T(c1), T(c2), sc, fc, T(g), T(ψ), T(pm), T(NaN), T(NaN), T(NaN), T(1.0), results)
     end
 end
 
 # ===== Constructors
 
-function MPSO(prob::Problem{fType,S}; 
-    numParticles = 100, α = 0.2, c1 = 1.49, c2 = 1.49, sc = 15, fc = 5, g = 10000.0, ψ = 1.0, pm = -1.0) where {S,fType}
+function MPSO(prob::Problem{fType,S}; numParticles = 100, MFD = 2.8e-6, α = 0.2, 
+    c1 = 1.49, c2 = 1.49, sc = 15, fc = 5, g = 10000.0, ψ = 1.0, pm = -1.0) where {S,fType}
 
     # Type info
     T = typeof(1.0)
 
     # Call constructor
-    return MPSO{T}(prob, numParticles, α, c1, c2, sc, fc, g, ψ, pm)
+    return MPSO{T}(prob, numParticles, MFD, α, c1, c2, sc, fc, g, ψ, pm)
 end
 
 # ===== Methods 
@@ -100,6 +100,13 @@ function initialize!(mpso::MPSO, opts::Options)
     mpso.swarm.b = Inf
     setGlobalBest!(mpso.swarm)
 
+    # Initialize neighborhood size 
+    mpso.swarm.n = max(2, floor(length(mpso.swarm)*mpso.minNeighborFrac))
+
+    # Set social weights for MATLAB velocity update 
+    mpso.swarm.y₁ = mpso.c1
+    mpso.swarm.y₂ = mpso.c2
+
     # Set inertia 
     mpso.swarm.w = 0.9
 
@@ -119,6 +126,15 @@ function iterate!(mpso::MPSO, opts::Options)
     stallIters = 0
     fStall = Inf
 
+    # Set minimum neighborhood size
+    minNeighborSize = mpso.swarm.n
+
+    # Allocated best particle information storage
+    # This is required as a hack to allow us to us
+    # the MATLAB velocity update when MFD is large.
+    bestX = zeros(length(mpso.swarm.d))
+    bestV = zeros(length(mpso.swarm.d))
+
     # Begin loop 
     exitFlag    = 0
     prevSucc    = true
@@ -130,10 +146,15 @@ function iterate!(mpso::MPSO, opts::Options)
 
         # Update position of particles based on MFD
         bestIdx = updateGlobalBestParticlePosition!(mpso)
+        bestX .= mpso.swarm[bestIdx].x 
+        bestV .= mpso.swarm[bestIdx].v
         if mpso.MFD > mpso.MFDstar || iters == 0
-            updateParticlePositions!(mpso, bestIdx)
+            #updateParticlePositions!(mpso, bestIdx)
+            updateVelocities!(mpso.swarm)
+            step!(mpso.swarm)
+            mpso.swarm[bestIdx].x .= bestX 
+            mpso.swarm[bestIdx].v .= bestV
         else
-            throw(ErrorException("Fuck"))
             waveletMutateOrReinit!(mpso, bestIdx, iters, opts.maxIters)
         end
 
@@ -147,6 +168,15 @@ function iterate!(mpso::MPSO, opts::Options)
 
         # Update global best 
         succ::Bool = setGlobalBest!(mpso.swarm)
+
+        # Update stall counter and neighborhood
+        if succ 
+            mpso.swarm.c = max(0, mpso.swarm.c - 1)
+            mpso.swarm.n = minNeighborSize
+        else
+            mpso.swarm.c += 1
+            mpso.swarm.n = min(mpso.swarm.n + minNeighborSize, length(mpso.swarm) - 1)
+        end
 
         # Update ρ
         if prevSucc == succ 

@@ -182,7 +182,6 @@ function computeMFD(s::Swarm)
         @simd for i in 1:length(s)
             sum = 0.0
             @simd for j in 1:length(s.d)
-                #sum += (s[i].p[j] - s[i].x[j])^2
                 sum += (s.d[j] - s[i].x[j])^2
             end
             sqrtTerm = sqrt(sum / length(s.d))
@@ -192,6 +191,26 @@ function computeMFD(s::Swarm)
         end
     end
     return MFD
+end
+
+function computeLMFD(s::Swarm)
+
+end
+
+function computeAFD(s::Swarm)
+    @inbounds begin
+        AFD = 0.0
+        @simd for i in 1:length(s)
+            sum = 0.0
+            @simd for j in 1:length(s.d)
+                sum += (s.d[j] - s[i].x[j])^2
+            end
+            sqrtTerm = sqrt(sum / length(s.d))
+            AFD += sqrtTerm
+        end
+    end
+    AFD /= length(s)
+    return AFD
 end
 
 function printStatus(s::Swarm, time::AbstractFloat, iter::Int, stallCount::Int)
