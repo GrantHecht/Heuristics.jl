@@ -1,5 +1,5 @@
 
 function lMap(x)
-    μ =  3.9999999999
+    μ =  3.9
     return μ*x*(1 - x)
 end

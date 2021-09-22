@@ -37,23 +37,27 @@ function Base.show(io::Base.IO, res::Results)
         exitSpec  = FormatExpr("Maximum time reached.")
     end
 
-    # Print fbest
-    printfmtln(fbestSpec, res.fbest)
+    # Only print if results have been initialized
+    if res.iters != 0
+        # Print fbest
+        printfmtln(fbestSpec, res.fbest)
 
-    # Print xbest
-    if n == 1
-        printfmtln(x1DSpec, res.xbest[1])
-    else
-        printfmtln(xnDl1Spec, res.xbest[1])
-        for i in 2:n
-                printfmtln(xnDlmSpec, res.xbest[i])
+        # Print xbest
+        if n == 1
+            printfmtln(x1DSpec, res.xbest[1])
+        else
+            printfmtln(xnDl1Spec, res.xbest[1])
+            for i in 2:n
+                    printfmtln(xnDlmSpec, res.xbest[i])
+            end
         end
+
+        # Print iterations and time 
+        printfmtln(itersSpec, res.iters)
+        printfmtln(timeSpec, res.time)
+
+        # Print exit reason
+        printfmtln(exitSpec)
     end
-
-    # Print iterations and time 
-    printfmtln(itersSpec, res.iters)
-    printfmtln(timeSpec, res.time)
-
-    # Print exit reason
-    printfmtln(exitSpec)
+    return nothing
 end

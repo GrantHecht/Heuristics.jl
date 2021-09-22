@@ -6,4 +6,5 @@ using Test, SafeTestsets
 #@time @safetestset "Swarm tests..." begin include("swarmTests.jl") end
 @time @safetestset "PSO optimization test..." begin include("psoOptTests.jl") end
 @time @safetestset "MS_PSO optimization test..." begin include("mspsoOptTests.jl") end
+@time @safetestset "MPSO optimization test..." begin include("mpsoOptTests.jl") end
 end
