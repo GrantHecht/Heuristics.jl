@@ -128,7 +128,7 @@ function updateVelocities!(s::Swarm)
             incr = 0
             for j in 1:s.n
                 s.nVec[j] == i ? incr = 1 : () 
-                k = j + incr
+                k = s.nVec[j + incr]
                 if s[k].fp < fbest
                     fbest = s[k].fp
                     best = k
@@ -194,7 +194,20 @@ function computeMFD(s::Swarm)
 end
 
 function computeLMFD(s::Swarm)
-
+    @inbounds begin
+        shuffle!(s.nVec)
+        MFD = -Inf 
+        for i in 1:s.n 
+            sum = 0.0
+            @simd for j in 1:length(s.d)
+                sum += (s.d[j] + s[s.nVec[i]].x[j])^2
+            end
+            sqrtTerm = sqrt(sum / length(s.d))
+            if sqrtTerm > MFD 
+                MFD = sqrtTerm
+            end
+        end
+    end
 end
 
 function computeAFD(s::Swarm)
