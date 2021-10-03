@@ -251,7 +251,7 @@ function updateGlobalBestParticlePosition!(mpso::MPSO)
         # Find best particle
         f = Inf
         bestIdx = -1 
-        @simd for i in 1:length(mpso.swarm)
+        for i in 1:length(mpso.swarm)
             if mpso.swarm[i].fp < f
                 f = mpso.swarm[i].fp 
                 bestIdx = i
@@ -259,7 +259,7 @@ function updateGlobalBestParticlePosition!(mpso::MPSO)
         end
 
         # Update position 
-        @simd for i in 1:length(mpso.swarm.d)
+        for i in 1:length(mpso.swarm.d)
             mpso.swarm[bestIdx].v[i] = -mpso.swarm[bestIdx].x[i] + mpso.swarm.d[i] + mpso.swarm.w*mpso.swarm[bestIdx].v[i] + 
                                     mpso.ρ*(1.0 - 2.0*rand())
             mpso.swarm[bestIdx].x[i] += mpso.swarm[bestIdx].v[i]
@@ -270,9 +270,9 @@ end
 
 function updateParticlePositions!(mpso::MPSO, bestIdx)
     @inbounds begin
-        @simd for i in 1:length(mpso.swarm)
+        for i in 1:length(mpso.swarm)
             if i != bestIdx
-                @simd for j in 1:length(mpso.swarm.d)
+                for j in 1:length(mpso.swarm.d)
                     mpso.swarm[i].v[j] = mpso.swarm.w*mpso.swarm[i].v[j] + 
                                          mpso.c1*rand()*(mpso.swarm[i].p[j] - mpso.swarm[i].x[j]) +
                                          mpso.c2*rand()*(mpso.swarm.d[j] - mpso.swarm[i].x[j])
@@ -286,10 +286,10 @@ end
 function waveletMutateOrReinit!(mpso, bestIdx, iters, maxIters)
     @inbounds begin
         updateDilationParam!(mpso, iters, maxIters)
-        @simd for i in 1:length(mpso.swarm)
+        for i in 1:length(mpso.swarm)
             if i != bestIdx
                 if mpso.swarm[i].fx <= mpso.fAvg # Mutate!
-                    @simd for j in 1:length(mpso.swarm.d)
+                    for j in 1:length(mpso.swarm.d)
                         if rand() <= mpso.pm
                             σ = computeSigma(mpso)
                             if σ > 0
@@ -326,11 +326,11 @@ function reInitializeParticle!(mpso::MPSO, idx)
     maxPert = 1e-12
     lMapIters = 3000
     @inbounds begin
-        @simd for j in 1:N
+        for j in 1:N
             mpso.swarm[idx].x[j] = 0.4567 + 2.0*(rand() - 0.5)*maxPert
         end
-        @simd for j in 1:N
-            @simd for k in 1:lMapIters
+        for j in 1:N
+            for k in 1:lMapIters
                 val = mpso.swarm[idx].x[j]
                 if val < fixedPointTol || 
                     abs(val - 0.25) < fixedPointTol || 
@@ -349,7 +349,7 @@ function reInitializeParticle!(mpso::MPSO, idx)
     end
 
     # Scale particle positions 
-    @simd for j in 1:N
+    for j in 1:N
         mpso.swarm[idx].x[j] = LB[j] + (UB[j] - LB[j])*mpso.swarm[idx].x[j]
     end
 end

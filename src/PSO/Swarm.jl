@@ -62,7 +62,7 @@ function feval!(s::Swarm, f, opts::Options; init = false)
                 s[i].fx = f(s[i].x)
             end
         else
-            @simd for i in 1:length(s) 
+            for i in 1:length(s) 
                 s[i].fx = f(s[i].x)
             end
         end
@@ -75,14 +75,14 @@ function feval!(s::Swarm, f, opts::Options; init = false)
 
     # Update each particles best objective function value and its location
     if !init
-        @inbounds @simd for i in 1:length(s)
+        @inbounds for i in 1:length(s)
             if s[i].fx < s[i].fp
                 s[i].p .= s[i].x
                 s[i].fp = s[i].fx
             end
         end
     else
-        @inbounds @simd for i in 1:length(s)
+        @inbounds for i in 1:length(s)
             s[i].fp = s[i].fx
         end
     end
@@ -91,7 +91,7 @@ end
 function setGlobalBest!(s::Swarm)
     updated = false
     @inbounds begin
-        @simd for i in 1:length(s)
+        for i in 1:length(s)
             if s[i].fp < s.b 
                 s.b = s[i].fp
                 s.d .= s[i].p
@@ -104,7 +104,7 @@ end
 
 function fValCheck(s::Swarm)
     @inbounds begin
-        @simd for i in 1:length(s)
+        for i in 1:length(s)
             if isinf(s[i].fx) || isnan(s[i].fx)
                 throw(ErrorException("Objective function returned Inf or NaN!"))
             end
@@ -116,7 +116,7 @@ function updateVelocities!(s::Swarm)
     n = length(s.d)
     m = length(s)
     @inbounds begin
-        @simd for i in 1:m
+        for i in 1:m
 
             # Shuffle vector containing integers 1:n
             # first m != i will be neighborhood
@@ -136,7 +136,7 @@ function updateVelocities!(s::Swarm)
             end
 
             # Update i's velocity 
-            @simd for j in 1:n
+            for j in 1:n
                 s[i].v[j] = s.w*s[i].v[j] + s.y₁*rand()*(s[i].p[j] - s[i].x[j]) + 
                                 s.y₂*rand()*(s[best].p[j] - s[i].x[j])
             end 
@@ -145,15 +145,15 @@ function updateVelocities!(s::Swarm)
 end
 
 function step!(s::Swarm)
-    @inbounds @simd for i in 1:length(s)
+    @inbounds for i in 1:length(s)
         s[i].x .= s[i].x .+ s[i].v 
     end
 end
 
 function enforceBounds!(s::Swarm, LB, UB)
     @inbounds begin
-        @simd for i in 1:length(s)
-            @simd for j in 1:length(s.d)
+        for i in 1:length(s)
+            for j in 1:length(s.d)
                 if s[i].x[j] > UB[j]
                     s[i].x[j] = UB[j]
                     s[i].v[j] = 0.0
@@ -169,7 +169,7 @@ end
 function computeAverangeFitness(s::Swarm)
     @inbounds begin
         sum = 0.0
-        @simd for i in 1:length(s)
+        for i in 1:length(s)
             sum += s[i].fx 
         end
     end
@@ -179,9 +179,9 @@ end
 function computeMFD(s::Swarm)
     @inbounds begin
         MFD = -Inf
-        @simd for i in 1:length(s)
+        for i in 1:length(s)
             sum = 0.0
-            @simd for j in 1:length(s.d)
+            for j in 1:length(s.d)
                 sum += (s.d[j] - s[i].x[j])^2
             end
             sqrtTerm = sqrt(sum / length(s.d))
@@ -199,7 +199,7 @@ function computeLMFD(s::Swarm)
         MFD = -Inf 
         for i in 1:s.n 
             sum = 0.0
-            @simd for j in 1:length(s.d)
+            for j in 1:length(s.d)
                 sum += (s.d[j] + s[s.nVec[i]].x[j])^2
             end
             sqrtTerm = sqrt(sum / length(s.d))
@@ -214,9 +214,9 @@ end
 function computeAFD(s::Swarm)
     @inbounds begin
         AFD = 0.0
-        @simd for i in 1:length(s)
+        for i in 1:length(s)
             sum = 0.0
-            @simd for j in 1:length(s.d)
+            for j in 1:length(s.d)
                 sum += (s.d[j] - s[i].x[j])^2
             end
             sqrtTerm = sqrt(sum / length(s.d))
@@ -265,11 +265,11 @@ function uniformInitialization!(swarm::Swarm, prob::Problem, opts::Options)
 
     # Initialize particle positions and velocities
     @inbounds begin
-        @simd for d in 1:N
+        for d in 1:N
             # Get local bounds for d-axis
             lLB = useInitBnds ? (LB[d] < iLB[d] ? iLB[d] : LB[d]) : LB[d]
             lUB = useInitBnds ? (UB[d] > iUB[d] ? iUB[d] : UB[d]) : UB[d]
-            @simd for p in 1:M
+            for p in 1:M
                 # Position information
                 swarm[p].x[d] = lLB + (lUB - lLB)*rand()
                 swarm[p].p[d] = swarm[p].x[d]
@@ -308,14 +308,14 @@ function logisticsMapInitialization!(swarm::Swarm, prob::Problem, opts::Options)
     maxPert = 1e-12
     lMapIters = 3000
     @inbounds begin
-        @simd for j in 1:M
-            @simd for k in 1:N
+        for j in 1:M
+            for k in 1:N
                 swarm[j].x[k] = 0.4567 + 2*(rand() - 0.5)*maxPert
             end
         end
-        @simd for i in 1:lMapIters
-            @simd for j in 1:M 
-                @simd for k in 1:N
+        for i in 1:lMapIters
+            for j in 1:M 
+                for k in 1:N
                     val = swarm[j].x[k]
                     if val < fixedPointTol || 
                        abs(val - 0.25) < fixedPointTol || 
@@ -336,11 +336,11 @@ function logisticsMapInitialization!(swarm::Swarm, prob::Problem, opts::Options)
 
     # Scale particle positions and initialize velocities
     @inbounds begin
-        @simd for d in 1:N
+        for d in 1:N
             # Get local bounds for d-axis
             lLB = useInitBnds ? (LB[d] < iLB[d] ? iLB[d] : LB[d]) : LB[d]
             lUB = useInitBnds ? (UB[d] > iUB[d] ? iUB[d] : UB[d]) : UB[d]
-            @simd for p in 1:M
+            for p in 1:M
                 # Position information
                 swarm[p].x[d] = lLB + (lUB - lLB)*swarm[p].x[d]
                 swarm[p].p[d] = swarm[p].x[d]
