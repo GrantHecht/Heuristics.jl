@@ -118,6 +118,11 @@ function initialize!(pso::PSO, opts::Options)
     pso.swarm.y₁ = pso.selfAdjustWeight
     pso.swarm.y₂ = pso.socialAdjustWeight
 
+    # Call callback function 
+    if opts.callback !== nothing
+        opts.callback(pso, 0)
+    end
+
     # Print Status
     if opts.display
         printStatus(pso.swarm, 0.0, 0, 0)
@@ -211,6 +216,11 @@ function iterate!(pso::PSO, opts::Options)
         # Output Status
         if opts.display && iters % opts.displayInterval == 0
             printStatus(pso.swarm, time() - t0, iters, stallIters)
+        end
+
+        # Call callback function
+        if opts.callback !== nothing
+            opts.callback(pso, iters)
         end
     end
 

@@ -1,5 +1,5 @@
 
-struct Options{T<:AbstractFloat, U<:AbstractVector}
+struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
 
     # Display Options
     display::Bool 
@@ -33,24 +33,26 @@ struct Options{T<:AbstractFloat, U<:AbstractVector}
     # Use parallel
     useParallel::Bool 
 
-    # Is vectorized 
-    #isVectorized::Bool # Not implemented
+    # Callback function
+    callback::CF
 end
 
-function Options(;display=true, displayInterval=1, funcTol=1e-6,
-    funValCheck=true, iUB::V=nothing, iLB::V=nothing, maxIters=1000, maxStallIters=25,
-    maxStallTime=500, maxTime=1800, objLimit=-Inf, useParallel=false) where 
-        {V<:Union{Nothing,AbstractArray}}
+function Options(;display=true, displayInterval=1, funcTol::T=1e-6,
+    funValCheck=true, iUB::Uu=nothing, iLB::Ul=nothing, maxIters=1000, maxStallIters=25,
+    maxStallTime=500, maxTime=1800, objLimit=-Inf, useParallel=false, callback::CF=nothing) where 
+    {T<:Number, Uu<:Union{Nothing, Vector{T}}, Ul<:Union{Nothing, Vector{T}}, CF<:Union{Nothing, Function}}
 
-    T = typeof(funcTol)
     if iUB === nothing
         iUB = Vector{T}([])
+        U   = Vector{T}
+    else
+        U   = Uu;
     end
     if iLB === nothing
         iLB = Vector{T}([])
     end
 
-    return Options{T,typeof(iUB)}(display, displayInterval, funcTol,
+    return Options{T,U,CF}(display, displayInterval, funcTol,
         funValCheck, iUB, iLB, maxIters, maxStallIters, maxStallTime, 
-        maxTime, objLimit, useParallel)
+        maxTime, objLimit, useParallel, callback)
 end
