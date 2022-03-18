@@ -22,12 +22,17 @@ begin
     end
 end
 
-# Sphere function test 2
+# Sphere function test 2 (also tests callback function feature
 begin
+    function callback(pso::PSO, opts::Options)
+	b = pso.swarm.b
+	return nothing
+    end
+
     N = 2
     M = 1000
     prob2 = Problem(sphereFunc, N)
-    opts = Options(;display = true, useParallel = true)
+    opts = Options(;display = true, useParallel = true, callback=callback)
     pso2 = PSO(prob2; numParticles = M, initMethod = :LogisticsMap)
 
     @suppress_out begin
