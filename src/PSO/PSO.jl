@@ -1,5 +1,5 @@
 
-struct PSO{T,S,fType} <: Optimizer
+mutable struct PSO{T,S,fType} <: Optimizer
 
     # Optimization problem
     prob::Problem{fType,S}
@@ -19,6 +19,20 @@ struct PSO{T,S,fType} <: Optimizer
 
     # Results data
     results::Results{T}
+
+    # Optimizer state flag
+    # state = 0 : Not initialized
+    # state = 1 : Initialized
+    # state = 2 : Optimizing
+    # state = 3 : Converged
+    state::Int
+
+    # Optimizer time, iteration, and stall parameters
+    t0::Float64 
+    stallT0::Float64
+    iters::Int 
+    stallIters::Int
+    fStall::T
 
     function PSO{T}(prob::Problem{fType,S}, numParticles::Integer, initMethod::Symbol, 
         updateMethod::Symbol, inertiaRange::Tuple{T,T}, minNeighborFrac::T, 
@@ -41,7 +55,7 @@ struct PSO{T,S,fType} <: Optimizer
 
         return new{T,S,fType}(prob, swarm, initMethod, updateMethod, 
                         inertiaRange, minNeighborFrac, selfAdjustWeight, 
-                        socialAdjustWeight, results)
+			socialAdjustWeight, results, 0, 0.0, 0.0, 0, 0, T(0.0))
     end
 end
 
@@ -118,9 +132,12 @@ function initialize!(pso::PSO, opts::Options)
     pso.swarm.y₁ = pso.selfAdjustWeight
     pso.swarm.y₂ = pso.socialAdjustWeight
 
+    # Set optimizer state 
+    pso.state    = 1
+
     # Call callback function 
     if opts.callback !== nothing
-        opts.callback(pso, 0)
+        opts.callback(pso, opts)
     end
 
     # Print Status
@@ -134,11 +151,9 @@ end
 function iterate!(pso::PSO, opts::Options)
 
     # Initialize time and iteration counter
-    t0  = time()
-    stallT0 = t0
-    iters = 0
-    stallIters = 0
-    fStall = Inf
+    pso.t0  		= time()
+    pso.stallT0 	= pso.t0
+    pso.fStall 		= Inf
 
     # Compute minimum neighborhood size
     minNeighborSize = max(2, floor(length(pso.swarm)*pso.minNeighborFrac))
@@ -148,7 +163,7 @@ function iterate!(pso::PSO, opts::Options)
     while exitFlag == 0
 
         # Update iteration counter 
-        iters += 1
+        pso.iters += 1
 
         # Update swarm velocities 
         updateVelocities!(pso.swarm)
@@ -192,49 +207,56 @@ function iterate!(pso::PSO, opts::Options)
         end 
 
         # Track stalling
-        if fStall - pso.swarm.b > opts.funcTol
-            fStall = pso.swarm.b 
-            stallIters = 0
-            stallT0 = time()
+        if pso.fStall - pso.swarm.b > opts.funcTol
+            pso.fStall 		= pso.swarm.b 
+            pso.stallIters 	= 0
+            pso.stallT0 	= time()
         else
-            stallIters += 1
+            pso.stallIters 	+= 1
         end
 
         # Stopping criteria
-        if stallIters >= opts.maxStallIters
-            exitFlag = 1
-        elseif iters >= opts.maxIters
-            exitFlag = 2
+        if pso.stallIters >= opts.maxStallIters
+            exitFlag 	= 1
+	    pso.state 	= 3
+        elseif pso.iters >= opts.maxIters
+            exitFlag 	= 2
+	    pso.state 	= 3
         elseif pso.swarm.b <= opts.objLimit
-            exitFlag = 3
-        elseif time() - stallT0 >= opts.maxStallTime 
-            exitFlag = 4
-        elseif time() - t0 >= opts.maxTime 
-            exitFlag = 5
+            exitFlag 	= 3
+	    pso.state 	= 3
+        elseif time() - pso.stallT0 >= opts.maxStallTime 
+            exitFlag 	= 4
+	    pso.state 	= 3
+        elseif time() - pso.t0 >= opts.maxTime 
+            exitFlag 	= 5
+	    pso.state 	= 3
+    	else
+            pso.state 	= 2
         end
 
         # Output Status
-        if opts.display && iters % opts.displayInterval == 0
-            printStatus(pso.swarm, time() - t0, iters, stallIters)
+        if opts.display && pso.iters % opts.displayInterval == 0
+            printStatus(pso.swarm, time() - pso.t0, pso.iters, pso.stallIters)
         end
 
         # Call callback function
         if opts.callback !== nothing
-            opts.callback(pso, iters)
+            opts.callback(pso, opts)
         end
     end
 
     # Set results
-    setResults!(pso, iters, time() - t0, exitFlag)
+    setResults!(pso, exitFlag)
 
     return nothing
 end
 
-function setResults!(pso::PSO, iters::Int, Δt::AbstractFloat, exitFlag::Int)
+function setResults!(pso::PSO, exitFlag::Int)
     pso.results.fbest = pso.swarm.b 
     pso.results.xbest .= pso.swarm.d
-    pso.results.iters = iters 
-    pso.results.time = Δt 
+    pso.results.iters = pso.iters 
+    pso.results.time = time() - pso.t0
     pso.results.exitFlag = exitFlag
 
     return nothing
