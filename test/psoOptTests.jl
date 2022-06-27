@@ -12,6 +12,7 @@ begin
     opts = Options(;display = false, useParallel=true)
     pso1 = PSO(prob1; numParticles = M)
 
+    
     res = optimize!(pso1, opts)
 
     @test res.fbest <= 1.0e-5
