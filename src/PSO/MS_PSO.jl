@@ -253,23 +253,57 @@ end
 # Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
 function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
     # Choosing swarm to intermingle with stalled swarm
-    swarmChosen = false
-    swarmIdx = stallIdx
-    while !swarmChosen
-        swarmIdx = rand(1:length(swarmVec))
-        if swarmIdx != stallIdx 
-            swarmChosen = true
+    swarmsChosen = false
+    swarmIdx1, swarmIdx2, swarmIdx3, swarmIdx4, swarmIdx5, swarmIdx6, swarmIdx7, swarmIdx8, swarmIdx9, swarmIdx10 = stallIdx
+    while !swarmsChosen
+        swarmIdx1 = rand(1:length(swarmVec))
+        swarmIdx2 = rand(1:length(swarmVec))
+        swarmIdx3 = rand(1:length(swarmVec))
+        swarmIdx4 = rand(1:length(swarmVec))
+        swarmIdx5 = rand(1:length(swarmVec))
+        swarmIdx6 = rand(1:length(swarmVec))
+        swarmIdx7 = rand(1:length(swarmVec))
+        swarmIdx8 = rand(1:length(swarmVec))
+        swarmIdx9 = rand(1:length(swarmVec))
+        swarmIdx10 = rand(1:length(swarmVec))
+        if swarmIdx1 != stallIdx && swarmIdx2 != stallIdx && swarmIdx3 != stallIdx &&  swarmIdx4 != stallIdx &&  swarmIdx5 != stallIdx && swarmIdx6 != stallIdx && swarmIdx7 != stallIdx && swarmIdx8 != stallIdx && swarmIdx9 != stallIdx && swarmIdx10 != stallIdx
+            swarmsChosen = true
         end
     end
 
-    # Intermingle small subset of chosen swarm (10%)
+    # Intermingle stalled swarm by overwriting everything with random particles from 10 swarms
     n = length(swarmVec[1])
-    nSubSet = floor(0.2*n)
-    for i in 1:nSubSet
+    for i in 1:n
         idx1 = rand(1:n) 
         idx2 = rand(1:n)
-        swarmVec[stallIdx][idx1].p .= swarmVec[swarmIdx][idx2].p
-        swarmVec[stallIdx][idx1].fp = swarmVec[swarmIdx][idx2].fp
+        idx3 = rand(1:n) 
+        idx4 = rand(1:n)
+        idx5 = rand(1:n) 
+        idx6 = rand(1:n)
+        idx7 = rand(1:n) 
+        idx8 = rand(1:n)
+        idx9 = rand(1:n) 
+        idx10 = rand(1:n)
+        swarmVec[stallIdx][idx1].p .= swarmVec[swarmIdx1][idx2].p
+        swarmVec[stallIdx][idx1].fp = swarmVec[swarmIdx1][idx2].fp
+        swarmVec[stallIdx][idx2].p .= swarmVec[swarmIdx1][idx3].p
+        swarmVec[stallIdx][idx2].fp = swarmVec[swarmIdx1][idx3].fp
+        swarmVec[stallIdx][idx3].p .= swarmVec[swarmIdx1][idx4].p
+        swarmVec[stallIdx][idx3].fp = swarmVec[swarmIdx1][idx4].fp
+        swarmVec[stallIdx][idx4].p .= swarmVec[swarmIdx1][idx5].p
+        swarmVec[stallIdx][idx4].fp = swarmVec[swarmIdx1][idx5].fp
+        swarmVec[stallIdx][idx5].p .= swarmVec[swarmIdx1][idx6].p
+        swarmVec[stallIdx][idx5].fp = swarmVec[swarmIdx1][idx6].fp
+        swarmVec[stallIdx][idx6].p .= swarmVec[swarmIdx1][idx7].p
+        swarmVec[stallIdx][idx6].fp = swarmVec[swarmIdx1][idx7].fp
+        swarmVec[stallIdx][idx7].p .= swarmVec[swarmIdx1][idx8].p
+        swarmVec[stallIdx][idx7].fp = swarmVec[swarmIdx1][idx8].fp
+        swarmVec[stallIdx][idx8].p .= swarmVec[swarmIdx1][idx9].p
+        swarmVec[stallIdx][idx8].fp = swarmVec[swarmIdx1][idx9].fp
+        swarmVec[stallIdx][idx9].p .= swarmVec[swarmIdx1][idx10].p
+        swarmVec[stallIdx][idx9].fp = swarmVec[swarmIdx1][idx10].fp
+        swarmVec[stallIdx][idx10].p .= swarmVec[swarmIdx1][idx1].p
+        swarmVec[stallIdx][idx10].fp = swarmVec[swarmIdx1][idx1].fp
     end
 
     return nothing
