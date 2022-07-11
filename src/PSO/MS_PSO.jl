@@ -276,7 +276,7 @@ for i=1:4, j=1:4
     r[i,j]=abs(s[j].x-s[i].x)
     if r[i,j]==0
         r[i,j]=Inf
-    else if r[i,j]<1.0
+    elseif r[i,j]<1.0
         resetIdx=i
         reset!(mspso,opts,resetIdx)
     end
