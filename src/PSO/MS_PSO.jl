@@ -272,8 +272,8 @@ function iterate!(mspso::MS_PSO, opts::Options)
 end
 
 #Calculate the distances between best for each swarm and reset if too close
-for i=1:4, j=1:4
-    r[i,j]=abs(s[j].x-s[i].x)
+for i=1:4, j=1:4 
+    r[i,j]=abs(swarm[j].x-swarm[i].x)
     if r[i,j]==0
         r[i,j]=Inf
     else if r[i,j]<1.0
