@@ -138,6 +138,27 @@ function initialize!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
+function reset!(mspso::MS_PSO, opts::Options,resetIdx)
+    if mspso.initMethod == :Uniform
+        uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+    elseif mspso.initMethod == :LogisticsMap
+        logisticsMapInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+    else
+        throw(ArgumentError("PSO initialization method is not implemented."))
+    end
+            # Evaluate Objective Function
+            feval!(mspso.swarmVec[resetIdx], mspso.prob.f, opts; init = true)
+
+            # Set swarm global best obj. func. value to Inf 
+            mspso.swarmVec[resetIdx].b = Inf
+    
+            # Set global best 
+            setGlobalBest!(mspso.swarmVec[resetIdx])
+    
+            # Initialize neighborhood size
+            mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+end
+
 function iterate!(mspso::MS_PSO, opts::Options)
 
     # Initialize time and iteration counter
@@ -250,62 +271,24 @@ function iterate!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
+#Calculate the distances between best for each swarm and reset if too close
+for i=1:4, j=1:4
+    r[i,j]=abs(s[j].x-s[i].x)
+    if r[i,j]==0
+        r[i,j]=Inf
+    else if r[i,j]<1.0
+        resetIdx=i
+        reset!(mspso,opts,resetIdx)
+    end
+end
+
+
+
 # Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
 function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
-    # Choosing swarm to intermingle with stalled swarm
-    swarmsChosen = false
-    swarmIdx1, swarmIdx2, swarmIdx3, swarmIdx4, swarmIdx5, swarmIdx6, swarmIdx7, swarmIdx8, swarmIdx9, swarmIdx10 = stallIdx
-    while !swarmsChosen
-        swarmIdx1 = rand(1:length(swarmVec))
-        swarmIdx2 = rand(1:length(swarmVec))
-        swarmIdx3 = rand(1:length(swarmVec))
-        swarmIdx4 = rand(1:length(swarmVec))
-        swarmIdx5 = rand(1:length(swarmVec))
-        swarmIdx6 = rand(1:length(swarmVec))
-        swarmIdx7 = rand(1:length(swarmVec))
-        swarmIdx8 = rand(1:length(swarmVec))
-        swarmIdx9 = rand(1:length(swarmVec))
-        swarmIdx10 = rand(1:length(swarmVec))
-        if swarmIdx1 != stallIdx && swarmIdx2 != stallIdx && swarmIdx3 != stallIdx &&  swarmIdx4 != stallIdx &&  swarmIdx5 != stallIdx && swarmIdx6 != stallIdx && swarmIdx7 != stallIdx && swarmIdx8 != stallIdx && swarmIdx9 != stallIdx && swarmIdx10 != stallIdx
-            swarmsChosen = true
-        end
-    end
-
-    # Intermingle stalled swarm by overwriting everything with random particles from 10 swarms
-    n = length(swarmVec[1])
-    for i in 1:n
-        idx1 = rand(1:n) 
-        idx2 = rand(1:n)
-        idx3 = rand(1:n) 
-        idx4 = rand(1:n)
-        idx5 = rand(1:n) 
-        idx6 = rand(1:n)
-        idx7 = rand(1:n) 
-        idx8 = rand(1:n)
-        idx9 = rand(1:n) 
-        idx10 = rand(1:n)
-        swarmVec[stallIdx][idx1].p .= swarmVec[swarmIdx1][idx2].p
-        swarmVec[stallIdx][idx1].fp = swarmVec[swarmIdx1][idx2].fp
-        swarmVec[stallIdx][idx2].p .= swarmVec[swarmIdx1][idx3].p
-        swarmVec[stallIdx][idx2].fp = swarmVec[swarmIdx1][idx3].fp
-        swarmVec[stallIdx][idx3].p .= swarmVec[swarmIdx1][idx4].p
-        swarmVec[stallIdx][idx3].fp = swarmVec[swarmIdx1][idx4].fp
-        swarmVec[stallIdx][idx4].p .= swarmVec[swarmIdx1][idx5].p
-        swarmVec[stallIdx][idx4].fp = swarmVec[swarmIdx1][idx5].fp
-        swarmVec[stallIdx][idx5].p .= swarmVec[swarmIdx1][idx6].p
-        swarmVec[stallIdx][idx5].fp = swarmVec[swarmIdx1][idx6].fp
-        swarmVec[stallIdx][idx6].p .= swarmVec[swarmIdx1][idx7].p
-        swarmVec[stallIdx][idx6].fp = swarmVec[swarmIdx1][idx7].fp
-        swarmVec[stallIdx][idx7].p .= swarmVec[swarmIdx1][idx8].p
-        swarmVec[stallIdx][idx7].fp = swarmVec[swarmIdx1][idx8].fp
-        swarmVec[stallIdx][idx8].p .= swarmVec[swarmIdx1][idx9].p
-        swarmVec[stallIdx][idx8].fp = swarmVec[swarmIdx1][idx9].fp
-        swarmVec[stallIdx][idx9].p .= swarmVec[swarmIdx1][idx10].p
-        swarmVec[stallIdx][idx9].fp = swarmVec[swarmIdx1][idx10].fp
-        swarmVec[stallIdx][idx10].p .= swarmVec[swarmIdx1][idx1].p
-        swarmVec[stallIdx][idx10].fp = swarmVec[swarmIdx1][idx1].fp
-    end
-
+    # resetting stalled swarm
+    resetIdx=stallIdx
+    reset!(mspso,opts,resetIdx)
     return nothing
 end
 
