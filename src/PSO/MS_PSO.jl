@@ -228,6 +228,9 @@ function iterate!(mspso::MS_PSO, opts::Options)
                 mspso.swarmVec[i].w = mspso.inertiaRange[1]
             end 
 
+            #Check if two swarms are too close
+            distancecheck!(mspso, opts)
+
             # Track stalling
             if fStall[i] - mspso.swarmVec[i].b > opts.funcTol
                 fStall[i] = mspso.swarmVec[i].b 
@@ -240,7 +243,7 @@ function iterate!(mspso::MS_PSO, opts::Options)
             # Check for stalling 
             if stallIters[i] >= opts.maxStallIters
                 hasStalled[i] = true
-                interMingle!(mspso.swarmVec, i)
+                interMingle!(mspso,opts, i)
             end
 
             
@@ -272,20 +275,27 @@ function iterate!(mspso::MS_PSO, opts::Options)
 end
 
 #Calculate the distances between best for each swarm and reset if too close
-for i=1:4, j=1:4 
-    r[i,j]=abs(swarm[j].x-swarm[i].x)
-    if r[i,j]==0
-        r[i,j]=Inf
-    else if r[i,j]<1.0
-        resetIdx=i
-        reset!(mspso,opts,resetIdx)
+function distancecheck!(mspso::MS_PSO, opts::Options)
+        #initialize distance check matrix
+        r=zeros(Float64,4,4)
+    @inbounds begin
+    for i=1:4, j=1:4 
+        DistVec=(mspso.swarmVec[j].d-mspso.swarmVec[i].d)
+        r[i,j]=sqrt(DistVec[1]^2+DistVec[2]^2)
+         if r[i,j]==0.0
+            r[i,j]=10.0
+         elseif r[i,j]<2.0
+            resetIdx=i
+         reset!(mspso,opts,resetIdx)
+        end
     end
+end
 end
 
 
 
-# Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
-function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
+# Intermingle doesnt really intermingle, for now just resets swarm that stalls
+function interMingle!(mspso::MS_PSO, opts::Options, stallIdx)
     # resetting stalled swarm
     resetIdx=stallIdx
     reset!(mspso,opts,resetIdx)
