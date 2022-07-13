@@ -294,16 +294,22 @@ end
 # is NOT compiled. 
 
 #Calculate the distances between best for each swarm and reset if too close
-#for i=1:4, j=1:4 
-#    r[i,j]=abs(swarm[j].x-swarm[i].x)
-#    if r[i,j]==0
-#        r[i,j]=Inf
-#    elseif r[i,j]<1.0
-#        resetIdx=i
-#        reset!(mspso,opts,resetIdx)
-#    end
-#end
-
+function distancecheck!(mspso::MS_PSO, opts::Options)
+    #initialize distance check matrix
+    r=zeros(Float64,4,4)
+@inbounds begin
+for i=1:4, j=1:4 
+    DistVec=(mspso.swarmVec[j].d-mspso.swarmVec[i].d)
+    r[i,j]=sqrt(DistVec[1]^2+DistVec[2]^2)
+     if r[i,j]==0.0
+        r[i,j]=10.0
+     elseif r[i,j]<2.0
+        resetIdx=i
+     reset!(mspso,opts,resetIdx)
+    end
+end
+end
+end
 
 
 # Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
