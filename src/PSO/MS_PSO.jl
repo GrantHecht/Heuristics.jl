@@ -138,7 +138,7 @@ function initialize!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
-function reset!(mspso::MS_PSO, opts::Options,resetIdx)
+function reset!(mspso::MS_PSO, opts::Options, resetIdx)
     if mspso.initMethod == :Uniform
         uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
     elseif mspso.initMethod == :LogisticsMap
@@ -240,7 +240,7 @@ function iterate!(mspso::MS_PSO, opts::Options)
             # Check for stalling 
             if stallIters[i] >= opts.maxStallIters
                 hasStalled[i] = true
-                interMingle!(mspso.swarmVec, i)
+                interMingle!(mspso, opts, i) # GH: Updated arguments pased to interMingle! 
             end
 
             
@@ -271,24 +271,39 @@ function iterate!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
+# GH: Not quite sure I understand where you ment for this block of code to be.
+# As is, this block is not within any function, so swarm, mspso, opts, and reset bestIdx
+# are not defined. Commenting out block for now. 
+
+# Just for you to get a better understanding of how Julia works, when code like this is written
+# outside of a function, it's in the "global scope" and only has access to variables defined in 
+# the global scope (variables in the global scope are usually defined in the main script you write
+# or are functions exported from the packages you import). 
+# Likewise, when code is in a function, it only has access to the varables within that function
+# (this is why I needed to modify the interMingle! function, to ass mspso and opts to the functions 
+# scope). In Julia, in general, we want to put as much as possible within a function, because
+# only code within functions is compiled (and therefor runs fast). Code in the global scope
+# is NOT compiled. 
+
 #Calculate the distances between best for each swarm and reset if too close
-for i=1:4, j=1:4 
-    r[i,j]=abs(swarm[j].x-swarm[i].x)
-    if r[i,j]==0
-        r[i,j]=Inf
-    elseif r[i,j]<1.0
-        resetIdx=i
-        reset!(mspso,opts,resetIdx)
-    end
-end
+#for i=1:4, j=1:4 
+#    r[i,j]=abs(swarm[j].x-swarm[i].x)
+#    if r[i,j]==0
+#        r[i,j]=Inf
+#    elseif r[i,j]<1.0
+#        resetIdx=i
+#        reset!(mspso,opts,resetIdx)
+#    end
+#end
 
 
 
 # Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
-function interMingle!(swarmVec::Vector{Swarm{T}}, stallIdx) where {T}
+function interMingle!(mspso::MS_PSO, opts::Options, stallIdx) where {T} # GH: Updated intermingle arguments to include MS_PSO object instead of just the swarm vector and options
     # resetting stalled swarm
-    resetIdx=stallIdx
-    reset!(mspso,opts,resetIdx)
+    # GH: Removed extra resetIdx variable for simplicity.
+    reset!(mspso, opts, stallIdx) # GH: Resetting each swarm every time max stall iters is hit results in failiur to converge... We'll need to update how this is done
+                                  # If you comment out the call to reset! here, the tests should pass.
     return nothing
 end
 

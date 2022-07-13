@@ -7,8 +7,8 @@ include("./../test/testProblems.jl")
 function main()
 
     # Size of problem
-    N = 2
-    M = 200
+    N = 2 # Length of the decision vector
+    M = 200 # Number of particles
 
     # Define problem: N is number of dims 
     LB = -100 .* ones(N)
@@ -17,7 +17,7 @@ function main()
     opts = Options(display=true)
 
     # Initialize Optimizer: M is swarm size!
-    optimizer = PSO{M}(prob; initMethod = :LogisticsMap)
+    optimizer = PSO{M}(prob)
 
     # solve 
     #Heuristics.initialize!(optimizer, opts)
