@@ -138,25 +138,30 @@ function initialize!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
-function reset!(mspso::MS_PSO, opts::Options,resetIdx)
-    if mspso.initMethod == :Uniform
-        uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
-    elseif mspso.initMethod == :LogisticsMap
-        logisticsMapInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
-    else
-        throw(ArgumentError("PSO initialization method is not implemented."))
-    end
-            # Evaluate Objective Function
-            feval!(mspso.swarmVec[resetIdx], mspso.prob.f, opts; init = true)
+function reset!(mspso::MS_PSO, opts::Options, resetIdx)
+    # GH: Only allow a swarm to reset if another swarm with a better solution exists
+    # If we don't do this, we can end up throwing away our best found solution.
+    if mspso.swarmVec[resetIdx].b > getBestF(mspso)
+        if mspso.initMethod == :Uniform
+            uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+        elseif mspso.initMethod == :LogisticsMap
+            logisticsMapInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+        else
+            throw(ArgumentError("PSO initialization method is not implemented."))
+        end
+        # Evaluate Objective Function
+        feval!(mspso.swarmVec[resetIdx], mspso.prob.f, opts; init = true)
 
-            # Set swarm global best obj. func. value to Inf 
-            mspso.swarmVec[resetIdx].b = Inf
-    
-            # Set global best 
-            setGlobalBest!(mspso.swarmVec[resetIdx])
-    
-            # Initialize neighborhood size
-            mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+        # Set swarm global best obj. func. value to Inf 
+        mspso.swarmVec[resetIdx].b = Inf
+
+        # Set global best 
+        setGlobalBest!(mspso.swarmVec[resetIdx])
+
+        # Initialize neighborhood size
+        mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+    end
+    return nothing
 end
 
 function iterate!(mspso::MS_PSO, opts::Options)
@@ -243,7 +248,7 @@ function iterate!(mspso::MS_PSO, opts::Options)
             # Check for stalling 
             if stallIters[i] >= opts.maxStallIters
                 hasStalled[i] = true
-                interMingle!(mspso,opts, i)
+                interMingle!(mspso, opts, i) # GH: Updated arguments pased to interMingle! 
             end
 
             
@@ -274,31 +279,39 @@ function iterate!(mspso::MS_PSO, opts::Options)
     return nothing
 end
 
+# GH: Not quite sure I understand where you ment for this block of code to be.
+# As is, this block is not within any function, so swarm, mspso, opts, and reset bestIdx
+# are not defined. Commenting out block for now. 
+
+# Just for you to get a better understanding of how Julia works, when code like this is written
+# outside of a function, it's in the "global scope" and only has access to variables defined in 
+# the global scope (variables in the global scope are usually defined in the main script you write
+# or are functions exported from the packages you import). 
+# Likewise, when code is in a function, it only has access to the varables within that functions scope
+# (this is why I needed to modify the interMingle! function, to ass mspso and opts to the functions 
+# scope). In Julia, in general, we want to put as much as possible within a function, because
+# only code within functions is compiled (and therefor runs fast). Code in the global scope
+# is NOT compiled. 
+
 #Calculate the distances between best for each swarm and reset if too close
-function distancecheck!(mspso::MS_PSO, opts::Options)
-        #initialize distance check matrix
-        r=zeros(Float64,4,4)
-    @inbounds begin
-    for i=1:4, j=1:4 
-        DistVec=(mspso.swarmVec[j].d-mspso.swarmVec[i].d)
-        r[i,j]=sqrt(DistVec[1]^2+DistVec[2]^2)
-         if r[i,j]==0.0
-            r[i,j]=10.0
-         elseif r[i,j]<2.0
-            resetIdx=i
-         reset!(mspso,opts,resetIdx)
-        end
-    end
-end
-end
+#for i=1:4, j=1:4 
+#    r[i,j]=abs(swarm[j].x-swarm[i].x)
+#    if r[i,j]==0
+#        r[i,j]=Inf
+#    elseif r[i,j]<1.0
+#        resetIdx=i
+#        reset!(mspso,opts,resetIdx)
+#    end
+#end
 
 
 
-# Intermingle doesnt really intermingle, for now just resets swarm that stalls
-function interMingle!(mspso::MS_PSO, opts::Options, stallIdx)
+# Could intermingle stalled swarm with best swarm or random swarm. Choosing random swarm for now!
+function interMingle!(mspso::MS_PSO, opts::Options, stallIdx) where {T} # GH: Updated intermingle arguments to include MS_PSO object instead of just the swarm vector and options
     # resetting stalled swarm
-    resetIdx=stallIdx
-    reset!(mspso,opts,resetIdx)
+    # GH: Removed extra resetIdx variable for simplicity.
+    reset!(mspso, opts, stallIdx) # GH: Resetting each swarm every time max stall iters is hit results in failiur to converge... We'll need to update how this is done
+                                  # If you comment out the call to reset! here, the tests should pass.
     return nothing
 end
 
@@ -318,6 +331,17 @@ function printStatus(swarmVec::Vector{Swarm{T}}, time, iter, stallCount::Int) wh
     printfmtln(fspec1, time, iter, (iter + 1)*length(swarmVec[1])*length(swarmVec))
     printfmtln(fspec2, stallCount, bestF)
     println(" ")
+end
+
+# Function to get the best objective function value from all swarms
+function getBestF(mspso::MS_PSO)
+    bestF = Inf 
+    for i in 1:length(mspso.swarmVec)
+        if mspso.swarmVec[i].b < bestF 
+            bestF = mspso.swarmVec[i].b
+        end
+    end
+    return bestF
 end
 
 function setResults!(mspso::MS_PSO, iters::Int, Δt::AbstractFloat, exitFlag::Int)
