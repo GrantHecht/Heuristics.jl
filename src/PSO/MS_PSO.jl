@@ -139,24 +139,29 @@ function initialize!(mspso::MS_PSO, opts::Options)
 end
 
 function reset!(mspso::MS_PSO, opts::Options, resetIdx)
-    if mspso.initMethod == :Uniform
-        uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
-    elseif mspso.initMethod == :LogisticsMap
-        logisticsMapInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
-    else
-        throw(ArgumentError("PSO initialization method is not implemented."))
-    end
-            # Evaluate Objective Function
-            feval!(mspso.swarmVec[resetIdx], mspso.prob.f, opts; init = true)
+    # GH: Only allow a swarm to reset if another swarm with a better solution exists
+    # If we don't do this, we can end up throwing away our best found solution.
+    if mspso.swarmVec[resetIdx].b > getBestF(mspso)
+        if mspso.initMethod == :Uniform
+            uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+        elseif mspso.initMethod == :LogisticsMap
+            logisticsMapInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
+        else
+            throw(ArgumentError("PSO initialization method is not implemented."))
+        end
+        # Evaluate Objective Function
+        feval!(mspso.swarmVec[resetIdx], mspso.prob.f, opts; init = true)
 
-            # Set swarm global best obj. func. value to Inf 
-            mspso.swarmVec[resetIdx].b = Inf
-    
-            # Set global best 
-            setGlobalBest!(mspso.swarmVec[resetIdx])
-    
-            # Initialize neighborhood size
-            mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+        # Set swarm global best obj. func. value to Inf 
+        mspso.swarmVec[resetIdx].b = Inf
+
+        # Set global best 
+        setGlobalBest!(mspso.swarmVec[resetIdx])
+
+        # Initialize neighborhood size
+        mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+    end
+    return nothing
 end
 
 function iterate!(mspso::MS_PSO, opts::Options)
@@ -279,7 +284,7 @@ end
 # outside of a function, it's in the "global scope" and only has access to variables defined in 
 # the global scope (variables in the global scope are usually defined in the main script you write
 # or are functions exported from the packages you import). 
-# Likewise, when code is in a function, it only has access to the varables within that function
+# Likewise, when code is in a function, it only has access to the varables within that functions scope
 # (this is why I needed to modify the interMingle! function, to ass mspso and opts to the functions 
 # scope). In Julia, in general, we want to put as much as possible within a function, because
 # only code within functions is compiled (and therefor runs fast). Code in the global scope
@@ -323,6 +328,17 @@ function printStatus(swarmVec::Vector{Swarm{T}}, time, iter, stallCount::Int) wh
     printfmtln(fspec1, time, iter, (iter + 1)*length(swarmVec[1])*length(swarmVec))
     printfmtln(fspec2, stallCount, bestF)
     println(" ")
+end
+
+# Function to get the best objective function value from all swarms
+function getBestF(mspso::MS_PSO)
+    bestF = Inf 
+    for i in 1:length(mspso.swarmVec)
+        if mspso.swarmVec[i].b < bestF 
+            bestF = mspso.swarmVec[i].b
+        end
+    end
+    return bestF
 end
 
 function setResults!(mspso::MS_PSO, iters::Int, Δt::AbstractFloat, exitFlag::Int)
