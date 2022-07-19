@@ -48,7 +48,7 @@ end
 
 # ===== Constructors
 
-function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 4, 
+function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 5, 
     inertiaRange = (0.1, 1.1), minNeighborFrac = 0.25, selfAdjustWeight = 1.49, 
     socialAdjustWeight = 1.49, initMethod::Symbol = :Uniform, 
     updateMethod::Symbol = :MATLAB) where {S,fType}
@@ -160,6 +160,10 @@ function reset!(mspso::MS_PSO, opts::Options, resetIdx)
 
         # Initialize neighborhood size
         mspso.swarmVec[resetIdx].n = max(2, floor(length(mspso.swarmVec[resetIdx])*mspso.minNeighborFrac))
+
+        #Add one to reset iteration counter
+        #resetCounter += 1
+
     end
     return nothing
 end
@@ -249,12 +253,19 @@ function iterate!(mspso::MS_PSO, opts::Options)
             if stallIters[i] >= opts.maxStallIters
                 hasStalled[i] = true
                 interMingle!(mspso, opts, i) # GH: Updated arguments pased to interMingle! 
+                #RESET STALL Iterations
+                #Set stalliter for swarm equal to zero.
+                stallIters[i] = 0
+
             end
 
             
        end
 
         # Stopping criteria
+        # Get rid of hasstalled and add max reset iters
+        #if resetCounter >= opts.maxResetIters
+        #    exitFlag = 1
         if all(hasStalled)
             exitFlag = 1
         elseif iters >= opts.maxIters
@@ -296,19 +307,24 @@ end
 #Calculate the distances between best for each swarm and reset if too close
 function distancecheck!(mspso::MS_PSO, opts::Options)
     #initialize distance check matrix
-    r=zeros(Float64,4,4)
-@inbounds begin
-for i=1:4, j=1:4 
-    DistVec=(mspso.swarmVec[j].d-mspso.swarmVec[i].d)
-    r[i,j]=sqrt(DistVec[1]^2+DistVec[2]^2)
-     if r[i,j]==0.0
-        r[i,j]=10.0
-     elseif r[i,j]<2.0
-        resetIdx=i
-     reset!(mspso,opts,resetIdx)
+    distVec=zeros(length(mspso.swarmVec[1].d))
+    @inbounds begin
+    for i = 1:length(mspso.swarmVec), j = 1:length(mspso.swarmVec)
+        distVec .= mspso.swarmVec[j].d .- mspso.swarmVec[i].d
+        Sum = 0.0
+        for k = 1:length(distVec)
+         Sum += distVec[k]^2
+        end
+        r = sqrt(Sum)
+            #make it so if statement when the swarms are equal
+            if i == j
+                nothing
+            elseif r < opts.resetDistance
+                resetIdx = i
+                reset!(mspso, opts, resetIdx)
+            end
     end
-end
-end
+    end
 end
 
 
