@@ -312,15 +312,24 @@ function distancecheck!(mspso::MS_PSO, opts::Options)
     for i = 1:length(mspso.swarmVec), j = 1:length(mspso.swarmVec)
         distVec .= mspso.swarmVec[j].d .- mspso.swarmVec[i].d
         Sum = 0.0
+
+        #Calculate the distance between each swarm
         for k = 1:length(distVec)
-         Sum += distVec[k]^2
+            Sum += distVec[k]^2
         end
         r = sqrt(Sum)
-            #make it so if statement when the swarms are equal
+            #if the swarms being evaluated are the same swarm they do nothing
             if i == j
                 nothing
             elseif r < opts.resetDistance
-                resetIdx = i
+
+                #reset worse of two swarms
+                if mspso.swarmVec[i].b > mspso.swarmVec[j].b
+                    resetIdx = i
+                else
+                    resetIdx = j
+                end
+
                 reset!(mspso, opts, resetIdx)
             end
     end
