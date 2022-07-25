@@ -1,6 +1,6 @@
 using Heuristics, StaticArrays, BenchmarkTools
 
-include("c:\\Users\\Owner\\.julia\\dev\\Heuristics\\test\\testProblems.jl")
+include("./../test/testProblems.jl")
 
 # Size of problem 
 N = 8
@@ -10,7 +10,8 @@ M = 500
 LB = -10 .* ones(N)
 UB =  10 .* ones(N)
 prob = Problem(rastriginfunc, LB, UB)
-opts = Options(display=true, maxIters=1000, maxStallIters = 1000, funcTol = 1e-8)
+#opts = Options(;display=true, maxIters=1000, maxStallIters = 1000, funcTol = 1e-8)
+opts = Options(;display = true, maxIters=1000, maxStallIters = 1000)
 
 # Instantiate MPSO
 mspso = MS_PSO(prob; numParticlesPerSwarm = M)
