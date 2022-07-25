@@ -3,8 +3,8 @@ using Heuristics, StaticArrays, BenchmarkTools
 include("./../test/testProblems.jl")
 
 # Size of problem 
-N = 8
-M = 500
+N = 8 # Length of the decision vector
+M = 1000 # Number of particles
 
 # Define problem 
 LB = -10 .* ones(N)

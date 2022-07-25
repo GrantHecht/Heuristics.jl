@@ -54,7 +54,7 @@ end
 
 # ===== Constructors
 
-function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 5, 
+function MS_PSO(prob::Problem{fType,S}; numParticlesPerSwarm = 100, numSwarms = 7, 
     inertiaRange = (0.1, 1.1), minNeighborFrac = 0.25, selfAdjustWeight = 1.49, 
     socialAdjustWeight = 1.49, initMethod::Symbol = :Uniform, 
     updateMethod::Symbol = :MATLAB) where {S,fType}
@@ -273,10 +273,7 @@ function iterate!(mspso::MS_PSO, opts::Options)
        end
 
         # Stopping criteria
-        # Get rid of hasstalled and add max reset iters
-        #if resetCounter >= opts.maxResetIters
-        #    exitFlag = 1
-        if all(hasStalled)
+        if mspso.resetCounter >= opts.maxResetIters
             exitFlag = 1
         elseif iters >= opts.maxIters
             exitFlag = 2

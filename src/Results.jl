@@ -26,7 +26,7 @@ function Base.show(io::Base.IO, res::Results)
 
     # Exit flag message
     if res.exitFlag == 1
-        exitSpec  = FormatExpr("Maximum stall iterations reached.")
+        exitSpec  = FormatExpr("Maximum reset iterations reached.")
     elseif res.exitFlag == 2
         exitSpec  = FormatExpr("Maximum iterations reached.")
     elseif res.exitFlag == 3
