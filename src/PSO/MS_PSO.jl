@@ -1,5 +1,5 @@
 
-struct MS_PSO{T,S,fType} <: Optimizer 
+mutable struct MS_PSO{T,S,fType} <: Optimizer 
 
     # Optimization problem 
     prob::Problem{fType,S}
@@ -17,6 +17,9 @@ struct MS_PSO{T,S,fType} <: Optimizer
     selfAdjustWeight::T
     socialAdjustWeight::T
 
+    # Swarm reset counter
+    resetCounter::Int
+
     # Results data 
     results::Results{T}
 
@@ -31,6 +34,9 @@ struct MS_PSO{T,S,fType} <: Optimizer
 
         # Initialize results
         results = Results{T}(undef, N)
+        
+        # Define reset counter
+        resetCounter = 0
 
         # Check that init and update methods exist
         if initMethod != :Uniform && initMethod != :LogisticsMap
@@ -42,7 +48,7 @@ struct MS_PSO{T,S,fType} <: Optimizer
 
         return new{T,S,fType}(prob, swarmVec, initMethod, updateMethod, 
                         inertiaRange, minNeighborFrac, selfAdjustWeight, 
-                        socialAdjustWeight, results)
+                        socialAdjustWeight, resetCounter, results)
     end
 end
 
@@ -142,6 +148,10 @@ function reset!(mspso::MS_PSO, opts::Options, resetIdx)
     # GH: Only allow a swarm to reset if another swarm with a better solution exists
     # If we don't do this, we can end up throwing away our best found solution.
     if mspso.swarmVec[resetIdx].b > getBestF(mspso)
+        # Increment reset counter 
+        mspso.resetCounter += 1
+
+        # Reinitialize swarm
         if mspso.initMethod == :Uniform
             uniformInitialization!(mspso.swarmVec[resetIdx], mspso.prob, opts)
         elseif mspso.initMethod == :LogisticsMap
