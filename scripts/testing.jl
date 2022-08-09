@@ -13,11 +13,11 @@ function main()
     # Define problem: N is number of dims 
     LB = -100 .* ones(N)
     UB =  100 .* ones(N)
-    prob = Problem{N}(rastriginfunc, LB, UB)
+    prob = Problem(rastriginfunc, LB, UB)
     opts = Options(display=true)
 
     # Initialize Optimizer: M is swarm size!
-    optimizer = PSO{M}(prob)
+    optimizer = PSO(prob; numParticles = M)
 
     # solve 
     #Heuristics.initialize!(optimizer, opts)
