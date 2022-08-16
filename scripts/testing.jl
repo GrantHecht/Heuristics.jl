@@ -7,12 +7,12 @@ include("./../test/testProblems.jl")
 function main()
 
     # Size of problem
-    N = 2 # Length of the decision vector
-    M = 200 # Number of particles
+    N = 8 # Length of the decision vector
+    M = 500 # Number of particles
 
     # Define problem: N is number of dims 
-    LB = -100 .* ones(N)
-    UB =  100 .* ones(N)
+    LB = -10 .* ones(N)
+    UB =  10 .* ones(N)
     prob = Problem(rastriginfunc, LB, UB)
     opts = Options(display=true)
 
