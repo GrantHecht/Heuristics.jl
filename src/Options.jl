@@ -3,7 +3,7 @@ struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
 
     # Display Options
     display::Bool 
-    displayInterval::UInt16
+    displayInterval::Int
 
     # Function tolerance
     funcTol::T
@@ -16,10 +16,10 @@ struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
     iLB::U
 
     # Max Iterations
-    maxIters::UInt32
+    maxIters::Int
 
     # Max Stall Iterations 
-    maxStallIters::UInt32
+    maxStallIters::Int
 
     # Max Stall Time 
     maxStallTime::T
@@ -45,10 +45,10 @@ struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
 end
 
 function Options(;display=true, displayInterval=1, funcTol::T=1e-6,
-    funValCheck=true, iUB::Uu=nothing, iLB::Ul=nothing, maxIters=1000, maxStallIters=200,
+    funValCheck=true, iUB::Uu=nothing, iLB::Ul=nothing, maxIters=1000, maxStallIters=25,
     maxStallTime=500, maxTime=1800, objLimit=-Inf, useParallel=false, callback::CF=nothing,
     resetDistance=2, maxResetIters=40) where 
-    {T<:Number, Uu<:Union{Nothing, Vector{T}}, Ul<:Union{Nothing, Vector{T}}, CF<:Union{Nothing, Function}}
+    {T<:Number, Uu<:Union{Nothing, Vector}, Ul<:Union{Nothing, Vector}, CF<:Union{Nothing, Function}}
 
     if iUB === nothing
         iUB = Vector{T}([])
